@@ -15,7 +15,9 @@ import XMonad.Hooks.ManageHelpers
 
 import XMonad.Layout.MultiToggle
 import XMonad.Layout.MultiToggle.Instances
+import XMonad.Layout.NoBorders (noBorders)
 import XMonad.Layout.SimplestFloat
+import XMonad.Layout.Spacing
 
 import XMonad.Util.NamedScratchpad
 
@@ -37,7 +39,6 @@ myManageHook = composeAll
 scratchpads :: [NamedScratchpad]
 scratchpads =
     [ shellScratchpad "htop"   ( customFloating $ centeredRect )
-    -- , NS "htop" "urxvt -name htop -e htop" (resource =? "htop") ( customFloating $ centeredRect )
     , tmuxScratchpad "_mail"   ( customFloating $ centeredRect )
     , tmuxScratchpad "hud"     ( customFloating $ upperBarRect )
     , NS "chromium" "chromium" (className =? "Chromium") ( customFloating $ rightBarRect )
@@ -91,10 +92,15 @@ main = xmonad $ defaultConfig
   { borderWidth        = 2
   , modMask            = myModMask
   , terminal           = myTerminal
-  , layoutHook         = myLayout
+  , layoutHook         = myLayoutHook
   , keys               = myKeys
   , normalBorderColor  = "#cccccc"
   , focusedBorderColor = "#cd8b00" }
+
+myLayoutHook = noBorders
+        . smartSpacing 1
+        . mkToggle (NOBORDERS ?? NBFULL ?? EOT)
+        $ myLayout
 
 myLayout = simplestFloat ||| Full
   where
@@ -191,8 +197,8 @@ myKeys :: XConfig Layout -> M.Map ( ButtonMask, KeySym ) ( X () )
 myKeys conf = M.fromList $
   myBaseKeys conf ++
   [((m .|. workspaceMask, k), windows $ f i)
-	  | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
-	  , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]] ++
+    | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
+    , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]] ++
   buildTagKeys tags focusUpTagged
 
 buildTagKeys :: [Tag] -> ( String -> X () ) -> [(( ButtonMask, KeySym ), X () )]
