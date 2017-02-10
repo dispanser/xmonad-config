@@ -1,0 +1,3 @@
+* xmonad-config
+
+Simple stack project to be able to use spacemacs + intero for editing my xmonad configuration.
