@@ -93,6 +93,7 @@ main = xmonad $ defaultConfig
   , modMask            = myModMask
   , terminal           = myTerminal
   , layoutHook         = myLayoutHook
+  , manageHook         = myManageHook
   , keys               = myKeys
   , normalBorderColor  = "#cccccc"
   , focusedBorderColor = "#cd8b00" }
