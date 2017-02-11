@@ -25,6 +25,9 @@ type TagKey = (Char, KeySym)
 
 type Tag = Char
 
+myWorkspaces :: [WorkspaceId]
+myWorkspaces = map show [1 .. 9 :: Int]
+
 myTerminal, myBrowser :: String
 myTerminal = "urxvt"
 myBrowser  = "vimb"
@@ -42,7 +45,12 @@ scratchpads =
     , tmuxScratchpad "_mail"   ( customFloating $ centeredRect )
     , tmuxScratchpad "hud"     ( customFloating $ upperBarRect )
     , NS "chromium" "chromium" (className =? "Chromium") ( customFloating $ rightBarRect )
-    ]
+    ] ++
+    map (localScratchpad tmuxScratchpad "left" ( customFloating $ upperBarRect ) ) myWorkspaces
+
+localScratchpad :: (String -> ManageHook -> NamedScratchpad) -> String -> ManageHook -> WorkspaceId -> NamedScratchpad
+localScratchpad nsF session hook ws = nsF session' hook
+  where session' = session ++ '_' : ws
 
 tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
 tmuxScratchpad session = NS session command (resource =? session)
@@ -152,6 +160,7 @@ myMainKeys =
   , ( (myModMask, xK_c), namedScratchpadAction scratchpads "chromium")
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
   , ( (myModMask, xK_f), sendMessage $ Toggle NBFULL)
+  , ( (myModMask, xK_i), localScratchpadToggle "left")
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
@@ -213,3 +222,9 @@ toggleTag tag window = do
   if tagActive
   then delTag tag window
   else addTag tag window
+
+localScratchpadToggle :: String -> X ()
+localScratchpadToggle name = do
+  scratchpad <- gets (W.currentTag . windowset)
+  let localName = name ++ "_" ++ scratchpad
+  namedScratchpadAction scratchpads localName
