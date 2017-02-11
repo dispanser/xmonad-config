@@ -61,8 +61,8 @@ shellScratchpad session = NS session command (resource =? session)
   where command = "urxvt -name " ++ session ++ " -e " ++ session
 
 centeredRect = W.RationalRect 0.2 0.2 0.6 0.6
-upperBarRect = W.RationalRect 0.0 0.0 1.0 0.3
-rightBarRect = W.RationalRect 0.4 0.6 1.0 1.0
+upperBarRect = W.RationalRect 0.0 0.0 1.0 0.4
+rightBarRect = W.RationalRect 0.5 0.0 0.5 1.0
 
 -- explicit list of tags
 tags :: [Tag]
