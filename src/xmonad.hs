@@ -161,6 +161,7 @@ myMainKeys =
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
   , ( (myModMask, xK_f), sendMessage $ Toggle NBFULL)
   , ( (myModMask, xK_i), localScratchpadToggle "left")
+  , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
