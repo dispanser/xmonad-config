@@ -36,8 +36,9 @@ myManageHook :: ManageHook
 myManageHook = composeAll
   [ className =? "Vimb" --> doRectFloat rightBarRect
   , title =? "xmessage" --> doRectFloat centeredRect
-  ] <+>
-    namedScratchpadManageHook scratchpads
+  , pure True           --> doFloat
+  ]
+  <+> namedScratchpadManageHook scratchpads
 
 scratchpads :: [NamedScratchpad]
 scratchpads =
