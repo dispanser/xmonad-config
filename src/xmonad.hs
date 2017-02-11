@@ -34,7 +34,7 @@ myBrowser  = "vimb"
 
 myManageHook :: ManageHook
 myManageHook = composeAll
-  [ className =? "vimb" --> doRectFloat rightBarRect
+  [ className =? "Vimb" --> doRectFloat rightBarRect
   , title =? "xmessage" --> doRectFloat centeredRect
   ] <+>
     namedScratchpadManageHook scratchpads
