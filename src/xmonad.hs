@@ -35,10 +35,17 @@ myBrowser  = "vimb"
 myManageHook :: ManageHook
 myManageHook = composeAll
   [ className =? "Vimb" --> doRectFloat rightBarRect
+  , className =? "Vimb" --> addTagHook "b"
   , title =? "xmessage" --> doRectFloat centeredRect
   , pure True           --> doFloat
   ]
   <+> namedScratchpadManageHook scratchpads
+
+addTagHook :: String -> ManageHook
+addTagHook tag = do
+  w <- ask
+  liftX $ addTag tag w
+  idHook
 
 scratchpads :: [NamedScratchpad]
 scratchpads =
