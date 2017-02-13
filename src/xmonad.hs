@@ -55,9 +55,9 @@ scratchpads =
     , NS "pidgin_contacts" "pidgin" isPidginContactList   (customFloating $ contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow (customFloating $ centeredRect )
     ]
-    ++ map (localScratchpad tmuxScratchpad "main" ( customFloating $ upperBarRect ) ) myWorkspaces
-    ++ map (localScratchpad tmuxScratchpad "build" ( customFloating $ upperBarRect ) ) myWorkspaces
-    ++ map (localScratchpad tmuxScratchpad "test" ( customFloating $ upperBarRect ) ) myWorkspaces
+    ++ map (localScratchpad tmuxScratchpad "main"  ( customFloating $ rightBarRect ) ) myWorkspaces
+    ++ map (localScratchpad tmuxScratchpad "build" ( customFloating $ upperRightRect ) ) myWorkspaces
+    ++ map (localScratchpad tmuxScratchpad "test"  ( customFloating $ lowerRightRect ) ) myWorkspaces
 
 isPidginContactList, isPidginMessageWindow :: Query Bool
 isPidginContactList   = isPidginClass <&&> isBuddy
@@ -85,6 +85,8 @@ centeredRect   = W.RationalRect 0.2 0.2 0.6 0.6
 upperBarRect   = W.RationalRect 0.0 0.0 1.0 0.4
 rightBarRect   = W.RationalRect 0.5 0.0 0.5 1.0
 contactBarRect = W.RationalRect 0.9 0.0 0.1 1.0
+upperRightRect = W.RationalRect 0.5 0.0 0.5 0.5
+lowerRightRect = W.RationalRect 0.5 0.5 0.5 0.5
 
 -- explicit list of tags
 tags :: [Tag]
