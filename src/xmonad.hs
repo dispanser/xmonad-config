@@ -34,8 +34,7 @@ myBrowser  = "vimb"
 
 myManageHook :: ManageHook
 myManageHook = composeAll
-  [ className =? "Vimb" --> doRectFloat rightBarRect
-  , className =? "Vimb" --> addTagHook "b"
+  [ className =? "Vimb" --> doRectFloat rightBarRect <+> addTagHook "d"
   , title =? "xmessage" --> doRectFloat centeredRect
   , pure True           --> doFloat
   ]
