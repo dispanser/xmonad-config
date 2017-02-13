@@ -52,10 +52,22 @@ scratchpads =
     , tmuxScratchpad "_mail"   ( customFloating $ centeredRect )
     , tmuxScratchpad "hud"     ( customFloating $ upperBarRect )
     , NS "chromium" "chromium" (className =? "Chromium") ( customFloating $ rightBarRect )
+    , NS "pidgin_contacts" "pidgin" isPidginContactList   (customFloating $ contactBarRect )
+    , NS "pidgin_messages" "pidgin" isPidginMessageWindow (customFloating $ centeredRect )
     ]
     ++ map (localScratchpad tmuxScratchpad "main" ( customFloating $ upperBarRect ) ) myWorkspaces
     ++ map (localScratchpad tmuxScratchpad "build" ( customFloating $ upperBarRect ) ) myWorkspaces
     ++ map (localScratchpad tmuxScratchpad "test" ( customFloating $ upperBarRect ) ) myWorkspaces
+
+isPidginContactList, isPidginMessageWindow :: Query Bool
+isPidginContactList   = isPidginClass <&&> isBuddy
+isPidginMessageWindow = isPidginClass <&&> notQ ( isBuddy )
+isPidginClass = className =? "Pidgin"
+isBuddy = title =? "Buddy List"
+notQ :: Query Bool -> Query Bool
+notQ query = do
+  b <- query
+  pure $ not b
 
 localScratchpad :: (String -> ManageHook -> NamedScratchpad) -> String -> ManageHook -> WorkspaceId -> NamedScratchpad
 localScratchpad nsF session hook ws = nsF session' hook
@@ -69,9 +81,10 @@ shellScratchpad :: String -> ManageHook -> NamedScratchpad
 shellScratchpad session = NS session command (resource =? session)
   where command = "urxvt -name " ++ session ++ " -e " ++ session
 
-centeredRect = W.RationalRect 0.2 0.2 0.6 0.6
-upperBarRect = W.RationalRect 0.0 0.0 1.0 0.4
-rightBarRect = W.RationalRect 0.5 0.0 0.5 1.0
+centeredRect   = W.RationalRect 0.2 0.2 0.6 0.6
+upperBarRect   = W.RationalRect 0.0 0.0 1.0 0.4
+rightBarRect   = W.RationalRect 0.5 0.0 0.5 1.0
+contactBarRect = W.RationalRect 0.9 0.0 0.1 1.0
 
 -- explicit list of tags
 tags :: [Tag]
@@ -166,10 +179,12 @@ myMainKeys =
   , ( (myModMask, xK_c), namedScratchpadAction scratchpads "chromium")
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
   , ( (myModMask, xK_f), sendMessage $ Toggle NBFULL)
-  , ( (myModMask, xK_p), localScratchpadToggle "main")
+  , ( (myModMask, xK_n), windows W.focusUp >> windows W.shiftMaster)
+  , ( (myModMask, xK_p), windows W.focusDown >> windows W.shiftMaster)
+  , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
   , ( (myModMask, xK_b), localScratchpadToggle "build")
   , ( (myModMask, xK_t), localScratchpadToggle "test")
-  , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
+  , ( (myModMask, xK_space), localScratchpadToggle "main")
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
@@ -177,6 +192,9 @@ myBaseKeys conf = myMainKeys ++
   [ ( (mod1Mask, xK_Tab), windows W.focusUp >> windows W.shiftMaster)
   , ( (mod1Mask .|. shiftMask, xK_Tab), windows W.focusDown)
   , ( (myModMask, xK_Return), windows W.focusMaster  )
+
+  , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
+  , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
   -- , ( (myModMask, xK_Return), windows W.focusMaster  )
   -- , ( (myModMask, xK_n     ), windows W.focusUp >> windows W.shiftMaster)
   -- , ( (myModMask, xK_p     ), windows W.focusDown )
