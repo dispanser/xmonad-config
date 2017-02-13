@@ -33,12 +33,12 @@ myTerminal = "urxvt"
 myBrowser  = "vimb"
 
 myManageHook :: ManageHook
-myManageHook = composeAll
+myManageHook = namedScratchpadManageHook scratchpads
+  <+> composeAll
   [ className =? "Vimb" --> doRectFloat rightBarRect <+> addTagHook "d"
   , title =? "xmessage" --> doRectFloat centeredRect
   , pure True           --> doFloat
   ]
-  <+> namedScratchpadManageHook scratchpads
 
 addTagHook :: String -> ManageHook
 addTagHook tag = do
