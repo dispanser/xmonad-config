@@ -52,8 +52,10 @@ scratchpads =
     , tmuxScratchpad "_mail"   ( customFloating $ centeredRect )
     , tmuxScratchpad "hud"     ( customFloating $ upperBarRect )
     , NS "chromium" "chromium" (className =? "Chromium") ( customFloating $ rightBarRect )
-    ] ++
-    map (localScratchpad tmuxScratchpad "left" ( customFloating $ upperBarRect ) ) myWorkspaces
+    ]
+    ++ map (localScratchpad tmuxScratchpad "main" ( customFloating $ upperBarRect ) ) myWorkspaces
+    ++ map (localScratchpad tmuxScratchpad "build" ( customFloating $ upperBarRect ) ) myWorkspaces
+    ++ map (localScratchpad tmuxScratchpad "test" ( customFloating $ upperBarRect ) ) myWorkspaces
 
 localScratchpad :: (String -> ManageHook -> NamedScratchpad) -> String -> ManageHook -> WorkspaceId -> NamedScratchpad
 localScratchpad nsF session hook ws = nsF session' hook
@@ -74,9 +76,6 @@ rightBarRect = W.RationalRect 0.5 0.0 0.5 1.0
 -- explicit list of tags
 tags :: [Tag]
 tags = [ 'e' -- editor
-       , 't' -- test runner (or anything else used for validation / checks
-       , 'b' -- build
-       , 'p' -- projects main terminal
        , 'd' -- project-related documentation
        , 'o' -- org mode: project-related org or similar
        ]
@@ -167,7 +166,9 @@ myMainKeys =
   , ( (myModMask, xK_c), namedScratchpadAction scratchpads "chromium")
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
   , ( (myModMask, xK_f), sendMessage $ Toggle NBFULL)
-  , ( (myModMask, xK_i), localScratchpadToggle "left")
+  , ( (myModMask, xK_p), localScratchpadToggle "main")
+  , ( (myModMask, xK_b), localScratchpadToggle "build")
+  , ( (myModMask, xK_t), localScratchpadToggle "test")
   , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
   ]
 
@@ -236,3 +237,6 @@ localScratchpadToggle name = do
   scratchpad <- gets (W.currentTag . windowset)
   let localName = name ++ "_" ++ scratchpad
   namedScratchpadAction scratchpads localName
+
+xmessage :: String -> X ()
+xmessage msg = spawn $ "xmessage " ++ msg
