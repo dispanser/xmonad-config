@@ -93,6 +93,7 @@ tags :: [Tag]
 tags = [ 'e' -- editor
        , 'd' -- project-related documentation
        , 'o' -- org mode: project-related org or similar
+       , 'x' -- assign freely, 'extended'
        ]
 
 -- simple thing that checks all potential sources for keybindings for our main mask:
@@ -181,8 +182,6 @@ myMainKeys =
   , ( (myModMask, xK_c), namedScratchpadAction scratchpads "chromium")
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
   , ( (myModMask, xK_f), sendMessage $ Toggle NBFULL)
-  , ( (myModMask, xK_n), windows W.focusUp >> windows W.shiftMaster)
-  , ( (myModMask, xK_p), windows W.focusDown >> windows W.shiftMaster)
   , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
   , ( (myModMask, xK_b), localScratchpadToggle "build")
   , ( (myModMask, xK_t), localScratchpadToggle "test")
@@ -191,29 +190,21 @@ myMainKeys =
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
 myBaseKeys conf = myMainKeys ++
-  [ ( (mod1Mask, xK_Tab), windows W.focusUp >> windows W.shiftMaster)
-  , ( (mod1Mask .|. shiftMask, xK_Tab), windows W.focusDown)
-  , ( (myModMask, xK_Return), windows W.focusMaster  )
+  -- basic window switch via mod-{n,p}. Mix in shift to not bring front
+  [ ( (myModMask,   xK_Return), windows W.focusMaster  )
+  , ( (myModMask,   xK_n), windows W.focusUp >> windows W.shiftMaster)
+  , ( (myModMask,   xK_p), windows W.focusDown >> windows W.shiftMaster)
+  , ( (myShiftMask, xK_n), windows W.focusUp)
+  , ( (myShiftMask, xK_p), windows W.focusDown)
 
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
-  -- , ( (myModMask, xK_Return), windows W.focusMaster  )
-  -- , ( (myModMask, xK_n     ), windows W.focusUp >> windows W.shiftMaster)
-  -- , ( (myModMask, xK_p     ), windows W.focusDown )
 
-  -- dealing with workspaces and screens
   , ( (myShiftMask, xK_s), shiftNextScreen)
 
-  -- Modifying the window order
-  , ( (myShiftMask, xK_Return), windows W.swapMaster) -- %! Swap the focused window and the master window
-  , ( (myShiftMask, xK_j     ), windows W.swapDown  ) -- %! Swap the focused window with the next window
-  , ( (myShiftMask, xK_k     ), windows W.swapUp    ) -- %! Swap the focused window with the previous window
-
-  -- resizing the master/slave ratio
-  -- , ( (myModMask,     xK_h), sendMessage Shrink) -- %! Shrink the master area
-  -- , ( (myModMask,     xK_l), sendMessage Expand) -- %! Expand the master area
-
-  -- move floating windows: snap to next barrier. Last param is a Maybe Int threshold in pixels
+  -- move floating windows: snap to next barrier. Last param is a Maybe Int
+  -- threshold in pixels but I couldn't find any impact;
+  -- TODO: check snapMove sources to understand param
   , ( (myShiftMask,   xK_h),  withFocused $ snapMove L Nothing)
   , ( (myShiftMask,   xK_l),  withFocused $ snapMove R Nothing)
   , ( (myShiftMask,   xK_k),  withFocused $ snapMove U Nothing)
@@ -237,8 +228,8 @@ myKeys conf = M.fromList $
   myBaseKeys conf ++
   [((m .|. workspaceMask, k), windows $ f i)
     | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
-    , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]] ++
-  buildTagKeys tags focusUpTagged
+    , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
+  ++ buildTagKeys tags focusUpTagged
 
 buildTagKeys :: [Tag] -> ( String -> X () ) -> [(( ButtonMask, KeySym ), X () )]
 buildTagKeys tagKeys action =
