@@ -8,6 +8,7 @@ import XMonad.Actions.CycleWS
 import XMonad.Actions.FloatKeys
 import XMonad.Actions.FloatSnap
 import XMonad.Actions.GridSelect
+import XMonad.Actions.Promote
 import XMonad.Actions.Submap
 import XMonad.Actions.TagWindows
 import XMonad.Actions.UpdatePointer
@@ -196,8 +197,8 @@ myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
 myBaseKeys conf = myMainKeys ++
   -- basic window switch via mod-{n,p}. Mix in shift to not bring front
   [ ( (myModMask,   xK_Return), windows W.focusMaster  )
-  , ( (myModMask,   xK_n), windows W.focusUp >> windows W.shiftMaster)
-  , ( (myModMask,   xK_p), windows W.focusDown >> windows W.shiftMaster)
+  , ( (myModMask,   xK_n), windows W.focusUp >> promote)
+  , ( (myModMask,   xK_p), windows W.focusDown >> promote)
   , ( (myShiftMask, xK_n), windows W.focusUp)
   , ( (myShiftMask, xK_p), windows W.focusDown)
 
@@ -236,8 +237,8 @@ myKeys conf = M.fromList $
   ++ buildTagKeys tags focusUpTagged
 
 tagControl :: [( ButtonMask, String -> X () )]
-tagControl = [ ( myModMask,     \k ->  focusUpTagged   k >> windows W.shiftMaster )
-             , ( myShiftMask,   \k ->  focusDownTagged k >> windows W.shiftMaster )
+tagControl = [ ( myModMask,     \k ->  focusUpTagged   k >> promote)
+             , ( myShiftMask,   \k ->  focusDownTagged k >> promote)
              , ( tagToggleMask, withFocused . toggleTag )
              ]
 
