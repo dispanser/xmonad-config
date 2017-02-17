@@ -112,13 +112,12 @@ keyToCode = M.fromList $ zip (['a' .. 'z'] ++ ['0' .. '9']) ([xK_a .. xK_z] ++ [
 resizeStepSize :: Dimension
 resizeStepSize = 120
 
-myModMask, tagSelectMask, tagToggleMask, workspaceMask :: ButtonMask
+myModMask, myShiftMask, myControlMask, myAltMask, tagToggleMask, workspaceMask :: ButtonMask
 myModMask           = mod5Mask
 myShiftMask         = myModMask .|. shiftMask
 myControlMask       = myModMask .|. controlMask
 myAltMask           = myModMask .|. mod1Mask
-tagSelectMask       = myModMask
-tagToggleMask       = tagSelectMask .|. mod4Mask
+tagToggleMask       = myModMask .|. mod4Mask
 workspaceMask       = myModMask
 
 main :: IO ()
@@ -236,10 +235,15 @@ myKeys conf = M.fromList $
     , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
   ++ buildTagKeys tags focusUpTagged
 
+tagControl :: [( ButtonMask, String -> X () )]
+tagControl = [ ( myModMask,     \k ->  focusUpTagged   k >> windows W.shiftMaster )
+             , ( myShiftMask,   \k ->  focusDownTagged k >> windows W.shiftMaster )
+             , ( tagToggleMask, withFocused . toggleTag )
+             ]
+
 buildTagKeys :: [Tag] -> ( String -> X () ) -> [(( ButtonMask, KeySym ), X () )]
 buildTagKeys tagKeys action =
-  [((tagSelectMask, keyToCode M.! key), action [key] >> windows W.shiftMaster) | key <- tagKeys ] ++
-  [((tagToggleMask, keyToCode M.! key), (withFocused . toggleTag) [key])       | key <- tagKeys ]
+  [ ( ( modMask, keyToCode M.! key ), action [key] ) | (modMask, action ) <- tagControl, key <- tagKeys ]
 
 toggleTag :: String -> Window -> X ()
 toggleTag tag window = do
