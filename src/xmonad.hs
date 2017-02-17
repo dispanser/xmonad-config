@@ -36,9 +36,10 @@ myBrowser  = "vimb"
 myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
   <+> composeAll
-  [ className =? "Vimb" --> doRectFloat rightBarRect <+> addTagHook "d"
-  , title =? "xmessage" --> doRectFloat centeredRect
-  , pure True           --> doFloat
+  [ className =? "Vimb"  --> doRectFloat rightBarRect <+> addTagHook "d"
+  , title =? "xmessage"  --> doRectFloat centeredRect
+  , className =? "Emacs" --> doRectFloat leftBarRect <+> addTagHook "e"
+  , pure True            --> doFloat
   ]
 
 addTagHook :: String -> ManageHook
@@ -85,9 +86,11 @@ shellScratchpad session = NS session command (resource =? session)
 centeredRect   = W.RationalRect 0.2 0.2 0.6 0.6
 upperBarRect   = W.RationalRect 0.0 0.0 1.0 0.4
 rightBarRect   = W.RationalRect 0.5 0.0 0.5 1.0
+leftBarRect    = W.RationalRect 0.0 0.0 0.5 0.9
 contactBarRect = W.RationalRect 0.9 0.0 0.1 1.0
 upperRightRect = W.RationalRect 0.5 0.0 0.5 0.5
 lowerRightRect = W.RationalRect 0.5 0.5 0.5 0.5
+upperLeftRect  = W.RationalRect 0.0 0.0 0.5 0.5
 
 -- explicit list of tags
 tags :: [Tag]
