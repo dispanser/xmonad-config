@@ -8,6 +8,7 @@ import XMonad.Actions.CycleWS
 import XMonad.Actions.FloatKeys
 import XMonad.Actions.FloatSnap
 import XMonad.Actions.GridSelect
+import XMonad.Actions.Navigation2D
 import XMonad.Actions.Promote
 import XMonad.Actions.Submap
 import XMonad.Actions.TagWindows
@@ -154,6 +155,7 @@ appSubmap = M.fromList
   , ( (0, xK_e), spawn "emacs")
   , ( (0, xK_v), spawn "gvim")
   , ( (0, xK_p), spawn "pidgin")
+  , ( (0, xK_h), namedScratchpadAction scratchpads "htop")
   ]
 
 -- submaps for various prompt-based actions
@@ -182,7 +184,6 @@ myMainKeys =
   , ( (myModMask, xK_w), submap windowSubmap)
   , ( (myModMask, xK_r), toggleWS' ["NSP"])
   , ( (myModMask, xK_s), nextScreen)
-  , ( (myModMask, xK_h), namedScratchpadAction scratchpads "htop")
   , ( (myModMask, xK_m), namedScratchpadAction scratchpads "_mail")
   , ( (myModMask, xK_c), namedScratchpadAction scratchpads "chromium")
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
@@ -190,6 +191,11 @@ myMainKeys =
   , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
   , ( (myModMask, xK_b), localScratchpadToggle "build")
   , ( (myModMask, xK_t), localScratchpadToggle "test")
+  , ( (myModMask, xK_l), windowGo R False)
+  , ( (myModMask, xK_h), windowGo L False)
+  , ( (myModMask, xK_k), windowGo U False)
+  , ( (myModMask, xK_j), windowGo D False)
+
   , ( (myModMask, xK_space), localScratchpadToggle "main")
   ]
 
