@@ -10,6 +10,7 @@ import XMonad.Actions.FloatSnap
 import XMonad.Actions.GridSelect
 import XMonad.Actions.Submap
 import XMonad.Actions.TagWindows
+import XMonad.Actions.UpdatePointer
 
 import XMonad.Hooks.ManageHelpers
 
@@ -124,6 +125,7 @@ main = xmonad $ defaultConfig
   , terminal           = myTerminal
   , layoutHook         = myLayoutHook
   , manageHook         = myManageHook
+  , logHook            = updatePointer (0.5, 0.5) (0, 0)
   , keys               = myKeys
   , normalBorderColor  = "#cccccc"
   , focusedBorderColor = "#cd8b00" }
