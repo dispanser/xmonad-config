@@ -183,11 +183,15 @@ windowSubmap = M.fromList
   , ( (0, xK_h), withFocused hide)
   ]
 
+mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
+-- mySubmap = resubmapDefaultWithKey $ (\k -> xmessage ("huhu, unexpected key: " ++ (show $ snd k) ) )
+mySubmap = resubmap
+
 myMainKeys :: [(( ButtonMask, KeySym ), X () )]
 myMainKeys =
-  [ ( (myModMask, xK_a), submap appSubmap)
-  , ( (myModMask, xK_z), submap promptSubmap)
-  , ( (myModMask, xK_w), submap windowSubmap)
+  [ ( (myModMask, xK_a), mySubmap appSubmap)
+  , ( (myModMask, xK_z), mySubmap promptSubmap)
+  , ( (myModMask, xK_w), mySubmap windowSubmap)
   , ( (myModMask, xK_r), toggleWS' ["NSP"])
   , ( (myModMask, xK_s), nextScreen)
   , ( (myModMask, xK_m), namedScratchpadAction scratchpads "_mail")
