@@ -82,11 +82,14 @@ localScratchpad nsF session hook ws = nsF session' hook
 
 tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
 tmuxScratchpad session = NS session command (resource =? session)
-  where command = "urxvt -name " ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
+  where command = tmux session
 
 shellScratchpad :: String -> ManageHook -> NamedScratchpad
 shellScratchpad session = NS session command (resource =? session)
   where command = "urxvt -name " ++ session ++ " -e " ++ session
+
+tmux :: String -> String
+tmux session = myTerminal ++ " -name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
 
 centeredRect   = W.RationalRect 0.2 0.2 0.6 0.6
 upperBarRect   = W.RationalRect 0.0 0.0 1.0 0.4
