@@ -8,13 +8,13 @@ import XMonad.Prompt (amberXPConfig)
 import qualified XMonad.StackSet as W
 
 import XMonad.Actions.CycleWS (nextScreen, shiftNextScreen, toggleWS')
-import XMonad.Actions.DynamicProjects (Project (..), dynamicProjects, switchProjectPrompt)
+import XMonad.Actions.DynamicProjects (Project (..), dynamicProjects, switchProjectPrompt, changeProjectDirPrompt)
 import XMonad.Actions.FloatKeys (keysResizeWindow)
 import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
 import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig)
 import XMonad.Actions.Navigation2D (windowGo)
 import XMonad.Actions.Promote (promote)
-import XMonad.Actions.Resubmap (resubmap)
+import XMonad.Actions.Submap (submap)
 import XMonad.Actions.TagWindows (addTag, delTag, focusDownTagged, focusUpTagged, hasTag)
 import XMonad.Actions.UpdatePointer (updatePointer)
 import XMonad.Actions.WindowGo (raiseMaybe)
@@ -29,20 +29,18 @@ import XMonad.Layout.Spacing (smartSpacing)
 
 import XMonad.Util.NamedScratchpad
 
-type TagKey = (Char, KeySym)
-
 type Tag = Char
 
 projects :: [Project]
 projects =
-  [ Project { projectName      = "configs"
+  [ Project { projectName      = "system"
             , projectDirectory = "~/configs"
             , projectStartHook = Nothing
             }
 
   , Project { projectName      = "xmonad-config"
-            , projectDirectory = "~/src/configs/xmonad-config"
-            , projectStartHook = Just $ do spawn "emacs src/xmonad.hs"
+            , projectDirectory = "~/src/configs/xmonad"
+            , projectStartHook = Just $ do spawn "emacs xmonad-config/src/xmonad.hs"
                                            spawn "emacs master.org"
             }
   ]
@@ -199,7 +197,7 @@ windowSubmap = M.fromList
 
 mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
 -- mySubmap = resubmapDefaultWithKey $ (\k -> xmessage ("huhu, unexpected key: " ++ (show $ snd k) ) )
-mySubmap = resubmap
+mySubmap = submap
 
 myMainKeys :: [(( ButtonMask, KeySym ), X () )]
 myMainKeys =
@@ -223,10 +221,10 @@ myMainKeys =
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
 myBaseKeys conf = myMainKeys ++
+  [ ( (myModMask,   xK_Return), promote)
+  , ( (myShiftMask, xK_Return), windows W.focusMaster)
+
   -- basic window switch via mod-{n,p}. Mix in shift to not bring front
-  [ ( (myModMask,   xK_Return), windows W.focusMaster)
-  , ( (myShiftMask, xK_Return), promote)
-  , ( (myModMask,   xK_BackSpace), withFocused hide)
   , ( (myShiftMask, xK_Return), promote)
   , ( (myModMask,   xK_n), windows W.focusUp >> promote)
   , ( (myModMask,   xK_p), windows W.focusDown >> promote)
@@ -237,7 +235,9 @@ myBaseKeys conf = myMainKeys ++
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
-  , ( (myModMask, xK_space), switchProjectPrompt amberXPConfig)
+  , ( (myModMask,   xK_space), switchProjectPrompt    amberXPConfig)
+  , ( (myShiftMask, xK_space), changeProjectDirPrompt amberXPConfig)
+
   -- move floating windows: snap to next barrier. Last param is a Maybe Int
   -- threshold in pixels but I couldn't find any impact;
   -- TODO: check snapMove sources to understand param
