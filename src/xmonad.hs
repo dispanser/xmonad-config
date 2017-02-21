@@ -62,11 +62,11 @@ scratchpads =
     , NS "pidgin_contacts" "pidgin" isPidginContactList   (customFloating $ contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow (customFloating $ centeredRect )
     ]
-    ++ map (localScratchpad tmuxScratchpad "main"  ( customFloating $ rightBarRect ) ) myWorkspaces
+    ++ map (localScratchpad tmuxScratchpad "main"  ( customFloating $ rightBarRect   ) ) myWorkspaces
     ++ map (localScratchpad tmuxScratchpad "build" ( customFloating $ upperRightRect ) ) myWorkspaces
     ++ map (localScratchpad tmuxScratchpad "test"  ( customFloating $ lowerRightRect ) ) myWorkspaces
 
-isPidginContactList, isPidginMessageWindow :: Query Bool
+isPidginContactList, isPidginMessageWindow, isPidginClass, isBuddy :: Query Bool
 isPidginContactList   = isPidginClass <&&> isBuddy
 isPidginMessageWindow = isPidginClass <&&> notQ ( isBuddy )
 isPidginClass = className =? "Pidgin"
