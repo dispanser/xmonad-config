@@ -1,26 +1,29 @@
+import Debug.Trace
+
 import qualified Data.Map as M
 
 import XMonad
 import XMonad.ManageHook
 import qualified XMonad.StackSet as W
 
-import XMonad.Actions.CycleWS
-import XMonad.Actions.FloatKeys
-import XMonad.Actions.FloatSnap
-import XMonad.Actions.GridSelect
-import XMonad.Actions.Navigation2D
-import XMonad.Actions.Promote
-import XMonad.Actions.Submap
-import XMonad.Actions.TagWindows
-import XMonad.Actions.UpdatePointer
+import XMonad.Actions.CycleWS (nextScreen, shiftNextScreen, toggleWS')
+import XMonad.Actions.FloatKeys (keysResizeWindow)
+import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
+import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig)
+import XMonad.Actions.Navigation2D (windowGo)
+import XMonad.Actions.Promote (promote)
+import XMonad.Actions.Resubmap (resubmap)
+import XMonad.Actions.TagWindows (addTag, delTag, focusDownTagged, focusUpTagged, hasTag)
+import XMonad.Actions.UpdatePointer (updatePointer)
+import XMonad.Actions.WindowGo (raiseMaybe)
 
 import XMonad.Hooks.ManageHelpers
 
 import XMonad.Layout.MultiToggle
 import XMonad.Layout.MultiToggle.Instances
 import XMonad.Layout.NoBorders (noBorders)
-import XMonad.Layout.SimplestFloat
-import XMonad.Layout.Spacing
+import XMonad.Layout.SimplestFloat (simplestFloat)
+import XMonad.Layout.Spacing (smartSpacing)
 
 import XMonad.Util.NamedScratchpad
 
