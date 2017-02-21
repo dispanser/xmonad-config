@@ -78,15 +78,13 @@ scratchpads =
     , NS "pidgin_contacts" "pidgin" isPidginContactList   (customFloating $ contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow (customFloating $ centeredRect )
     ]
-    ++ map (localScratchpad tmuxScratchpad "main"  ( customFloating $ rightBarRect   ) ) myWorkspaces
-    ++ map (localScratchpad tmuxScratchpad "build" ( customFloating $ upperRightRect ) ) myWorkspaces
-    ++ map (localScratchpad tmuxScratchpad "test"  ( customFloating $ lowerRightRect ) ) myWorkspaces
 
 isPidginContactList, isPidginMessageWindow, isPidginClass, isBuddy :: Query Bool
 isPidginContactList   = isPidginClass <&&> isBuddy
 isPidginMessageWindow = isPidginClass <&&> notQ ( isBuddy )
 isPidginClass = className =? "Pidgin"
 isBuddy = title =? "Buddy List"
+
 notQ :: Query Bool -> Query Bool
 notQ query = do
   b <- query
@@ -215,20 +213,21 @@ myMainKeys =
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
   , ( (myModMask, xK_f), sendMessage $ Toggle NBFULL)
   , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
-  , ( (myModMask, xK_b), localScratchpadToggle "build")
-  , ( (myModMask, xK_t), localScratchpadToggle "test")
+  , ( (myModMask, xK_b), runOrRaiseLocal "build")
+  , ( (myModMask, xK_t), runOrRaiseLocal "test")
   , ( (myModMask, xK_l), windowGo R False)
   , ( (myModMask, xK_h), windowGo L False)
   , ( (myModMask, xK_k), windowGo U False)
   , ( (myModMask, xK_j), windowGo D False)
-
-  , ( (myModMask, xK_space), localScratchpadToggle "main")
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
 myBaseKeys conf = myMainKeys ++
   -- basic window switch via mod-{n,p}. Mix in shift to not bring front
-  [ ( (myModMask,   xK_Return), windows W.focusMaster  )
+  [ ( (myModMask,   xK_Return), windows W.focusMaster)
+  , ( (myShiftMask, xK_Return), promote)
+  , ( (myModMask,   xK_BackSpace), withFocused hide)
+  , ( (myShiftMask, xK_Return), promote)
   , ( (myModMask,   xK_n), windows W.focusUp >> promote)
   , ( (myModMask,   xK_p), windows W.focusDown >> promote)
   , ( (myShiftMask, xK_n), windows W.focusUp)
@@ -269,8 +268,8 @@ myKeys conf = M.fromList $
   ++ buildTagKeys tags focusUpTagged
 
 tagControl :: [( ButtonMask, String -> X () )]
-tagControl = [ ( myModMask,     \k ->  focusUpTagged   k >> promote)
-             , ( myShiftMask,   \k ->  focusDownTagged k >> promote)
+tagControl = [ ( myModMask,     \k -> focusUpTagged   k >> promote)
+             , ( myShiftMask,   \k -> focusDownTagged k >> promote)
              , ( tagToggleMask, withFocused . toggleTag )
              ]
 
@@ -285,11 +284,12 @@ toggleTag tag window = do
   then delTag tag window
   else addTag tag window
 
-localScratchpadToggle :: String -> X ()
-localScratchpadToggle name = do
-  scratchpad <- gets (W.currentTag . windowset)
-  let localName = name ++ "_" ++ scratchpad
-  namedScratchpadAction scratchpads localName
+runOrRaiseLocal :: String -> X ()
+runOrRaiseLocal name = do
+  workspace <- gets (W.currentTag . windowset)
+  let localName = workspace ++ "_" ++ name
+  raiseMaybe (spawn $ tmux localName) (resource =? localName)
+  promote
 
 xmessage :: String -> X ()
-xmessage msg = spawn $ "xmessage " ++ msg
+xmessage msg = spawn $ "xmessage '" ++ msg ++ "' -default okay"
