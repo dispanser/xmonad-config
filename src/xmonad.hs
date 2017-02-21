@@ -4,9 +4,11 @@ import qualified Data.Map as M
 
 import XMonad
 import XMonad.ManageHook
+import XMonad.Prompt (amberXPConfig)
 import qualified XMonad.StackSet as W
 
 import XMonad.Actions.CycleWS (nextScreen, shiftNextScreen, toggleWS')
+import XMonad.Actions.DynamicProjects (Project (..), dynamicProjects, switchProjectPrompt)
 import XMonad.Actions.FloatKeys (keysResizeWindow)
 import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
 import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig)
@@ -30,6 +32,20 @@ import XMonad.Util.NamedScratchpad
 type TagKey = (Char, KeySym)
 
 type Tag = Char
+
+projects :: [Project]
+projects =
+  [ Project { projectName      = "configs"
+            , projectDirectory = "~/configs"
+            , projectStartHook = Nothing
+            }
+
+  , Project { projectName      = "xmonad-config"
+            , projectDirectory = "~/src/configs/xmonad-config"
+            , projectStartHook = Just $ do spawn "emacs src/xmonad.hs"
+                                           spawn "emacs master.org"
+            }
+  ]
 
 myWorkspaces :: [WorkspaceId]
 myWorkspaces = map show [1 .. 9 :: Int]
@@ -129,7 +145,7 @@ tagToggleMask       = myModMask .|. mod4Mask
 workspaceMask       = myModMask
 
 main :: IO ()
-main = xmonad $ defaultConfig
+main = xmonad $ dynamicProjects projects defaultConfig
   { borderWidth        = 2
   , modMask            = myModMask
   , terminal           = myTerminal
@@ -222,7 +238,7 @@ myBaseKeys conf = myMainKeys ++
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
-
+  , ( (myModMask, xK_space), switchProjectPrompt amberXPConfig)
   -- move floating windows: snap to next barrier. Last param is a Maybe Int
   -- threshold in pixels but I couldn't find any impact;
   -- TODO: check snapMove sources to understand param
