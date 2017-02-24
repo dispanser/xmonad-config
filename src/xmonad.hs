@@ -9,7 +9,7 @@ import XMonad.Prompt (amberXPConfig)
 import qualified XMonad.StackSet as W
 
 import XMonad.Actions.CycleWS (nextScreen, shiftNextScreen, toggleWS')
-import XMonad.Actions.DynamicProjects (Project (..), dynamicProjects, switchProjectPrompt, changeProjectDirPrompt)
+import XMonad.Actions.DynamicProjects (dynamicProjects, switchProjectPrompt, changeProjectDirPrompt)
 import XMonad.Actions.FloatKeys (keysResizeWindow)
 import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
 import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig)
@@ -30,21 +30,9 @@ import XMonad.Layout.Spacing (smartSpacing)
 
 import XMonad.Util.NamedScratchpad
 
+import MyWorkspaces
+
 type Tag = Char
-
-projects :: [Project]
-projects =
-  [ Project { projectName      = "system"
-            , projectDirectory = "~/configs"
-            , projectStartHook = Nothing
-            }
-
-  , Project { projectName      = "xmonad-config"
-            , projectDirectory = "~/src/configs/xmonad"
-            , projectStartHook = Just $ do spawn "emacs xmonad-config/src/xmonad.hs"
-                                           spawn "emacs master.org"
-            }
-  ]
 
 myWorkspaces :: [WorkspaceId]
 myWorkspaces = map show [1 .. 9 :: Int]
