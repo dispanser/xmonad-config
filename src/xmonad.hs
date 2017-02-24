@@ -1,5 +1,6 @@
 import Debug.Trace
 
+import Control.Monad (replicateM_)
 import qualified Data.Map as M
 
 import XMonad
@@ -217,7 +218,20 @@ myMainKeys =
   , ( (myModMask, xK_h), windowGo L False)
   , ( (myModMask, xK_k), windowGo U False)
   , ( (myModMask, xK_j), windowGo D False)
+  , ( (myModMask, xK_i), replicateM_ 3 $ withFocused $ sendKeyEvent 0 xK_z)
   ]
+
+-- | Send a key to the window
+sendKeyEvent :: ButtonMask -> KeySym -> Window -> X ()
+sendKeyEvent mask sym w = do
+  dpy <- asks display
+  io $ allocaXEvent $ \e -> do
+    rw      <- rootWindow dpy $ defaultScreen dpy
+    keyCode <- keysymToKeycode dpy sym
+    setEventType e keyPress
+    setKeyEvent e w rw 0 mask keyCode True
+    sendEvent dpy w False structureNotifyMask e
+  pure ()
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
 myBaseKeys conf = myMainKeys ++
