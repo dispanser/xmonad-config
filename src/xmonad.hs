@@ -37,9 +37,11 @@ type Tag = Char
 myWorkspaces :: [WorkspaceId]
 myWorkspaces = map show [1 .. 9 :: Int]
 
-myTerminal, myBrowser :: String
-myTerminal = "urxvt"
+myTerminal, myBrowser, myEditor :: String
 myBrowser  = "vimb"
+myEditor   = "emacsclient -c"
+myTerminal = "urxvt"
+
 
 myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
@@ -159,7 +161,7 @@ appSubmap = M.fromList
   [ ( (0, xK_x), spawn "if type xmonad; then xmonad --recompile && xmonad --restart; else xmessage xmonad not in \\$PATH: \"$PATH\"; fi")
   , ( (0, xK_t), spawn myTerminal)
   , ( (0, xK_b), spawn myBrowser)
-  , ( (0, xK_e), spawn "emacs")
+  , ( (0, xK_e), spawn myEditor)
   , ( (0, xK_v), spawn "gvim")
   , ( (0, xK_p), spawn "pidgin")
   , ( (0, xK_h), namedScratchpadAction scratchpads "htop")
