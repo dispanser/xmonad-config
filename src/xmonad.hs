@@ -5,7 +5,7 @@ import qualified Data.Map as M
 
 import XMonad
 import XMonad.ManageHook
-import XMonad.Prompt (amberXPConfig)
+import XMonad.Prompt (defaultXPConfig)
 import qualified XMonad.StackSet as W
 
 import XMonad.Actions.CycleWS
@@ -243,8 +243,8 @@ myBaseKeys conf = myMainKeys ++
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
-  , ( (myModMask,   xK_space), switchProjectPrompt    amberXPConfig)
-  , ( (myShiftMask, xK_space), changeProjectDirPrompt amberXPConfig)
+  , ( (myModMask,   xK_space), switchProjectPrompt    defaultXPConfig)
+  , ( (myShiftMask, xK_space), changeProjectDirPrompt defaultXPConfig)
 
   -- move floating windows: snap to next barrier. Last param is a Maybe Int
   -- threshold in pixels but I couldn't find any impact;
