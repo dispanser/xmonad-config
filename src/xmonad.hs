@@ -35,7 +35,7 @@ import MyWorkspaces
 type Tag = Char
 
 myWorkspaces :: [WorkspaceId]
-myWorkspaces = map show [1 .. 9 :: Int]
+myWorkspaces = map show [1 .. 3 :: Int]
 
 myTerminal, myBrowser, myEditor :: String
 myBrowser  = "vimb"
@@ -136,6 +136,7 @@ main = xmonad $ dynamicProjects projects defaultConfig
   { borderWidth        = 2
   , modMask            = myModMask
   , terminal           = myTerminal
+  , workspaces         = myWorkspaces
   , layoutHook         = myLayoutHook
   , manageHook         = myManageHook
   , logHook            = updatePointer (0.5, 0.5) (0, 0)
