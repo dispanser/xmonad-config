@@ -1,7 +1,20 @@
 import Debug.Trace
 
+-- current workings
+-- - Sublayouts w/ ResizableTall as outer layout
+-- - inner layout: Simplest (need to get tabs working, but subTabs doesn't cut it)
+-- - mnemonics: the key bindings for floating have been remapped to wasd
+-- - windownavigation via mod-[hjkl]
+-- - window merging via shiftMod-[hjkl] (pull into group)
+-- - shrink / expand via altMod-[hl] (master) [jk] (slave)
+-- - navigate inside tabs via mod-[np]
+-- - swap Up / down via shiftMod-[np] (inconsistent with tab-navigation)
+-- - spacing between windows (5px, also on edges)
+
+
 import Control.Monad (replicateM_)
 import qualified Data.Map as M
+import Data.Monoid (Endo(..))
 
 import XMonad
 import XMonad.ManageHook
@@ -12,9 +25,10 @@ import XMonad.Actions.CycleWS
 import XMonad.Actions.DynamicProjects (dynamicProjects, switchProjectPrompt, changeProjectDirPrompt)
 import XMonad.Actions.FloatKeys (keysResizeWindow)
 import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
-import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig)
-import XMonad.Actions.Navigation2D (windowGo)
+import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig, gridselect, gridselectWorkspace)
+-- import XMonad.Actions.Navigation2D (windowGo)
 import XMonad.Actions.Promote (promote)
+import XMonad.Actions.SinkAll (sinkAll)
 import XMonad.Actions.Submap (submap)
 import XMonad.Actions.TagWindows (addTag, delTag, focusDownTagged, focusUpTagged, hasTag)
 import XMonad.Actions.UpdatePointer (updatePointer)
@@ -22,11 +36,16 @@ import XMonad.Actions.WindowGo (raiseMaybe)
 
 import XMonad.Hooks.ManageHelpers
 
+import XMonad.Layout.BoringWindows
 import XMonad.Layout.MultiToggle
 import XMonad.Layout.MultiToggle.Instances
 import XMonad.Layout.NoBorders (noBorders)
+import XMonad.Layout.ResizableTile
 import XMonad.Layout.SimplestFloat (simplestFloat)
-import XMonad.Layout.Spacing (smartSpacing)
+import XMonad.Layout.Simplest
+import XMonad.Layout.Spacing (smartSpacingWithEdge)
+import XMonad.Layout.SubLayouts
+import XMonad.Layout.WindowNavigation
 
 import XMonad.Util.NamedScratchpad
 
@@ -42,14 +61,16 @@ myBrowser  = "vimb"
 myEditor   = "emacsclient -c"
 myTerminal = "urxvt"
 
+connectionNames = [ "Saaleblick", "lambda", "peta", "bahn", "tomtom-internal" ]
+myConnections = zip connectionNames connectionNames
 
 myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
   <+> composeAll
-  [ className =? "Vimb"  --> doRectFloat rightBarRect <+> addTagHook "d"
-  , title =? "xmessage"  --> doRectFloat centeredRect
-  , className =? "Emacs" --> doRectFloat leftBarRect <+> addTagHook "e"
-  , pure True            --> doFloat
+  [ title =? "xmessage"  --> doRectFloat centeredRect
+  , className =? "Vimb"  --> addTagHook "b"
+  , className =? "Emacs" --> addTagHook "e"
+  -- , pure True            --> doFloat -- catch-all to floating: disabled!
   ]
 
 addTagHook :: String -> ManageHook
@@ -63,7 +84,7 @@ scratchpads =
     [ shellScratchpad "htop"   ( customFloating $ centeredRect )
     , tmuxScratchpad "_mail"   ( customFloating $ centeredRect )
     , tmuxScratchpad "hud"     ( customFloating $ upperBarRect )
-    , NS "chromium" "chromium" (className =? "Chromium") ( customFloating $ rightBarRect )
+    , NS "chromium" "chromium" (className =? "Chromium") ( customFloating $ leftBarRect )
     , NS "pidgin_contacts" "pidgin" isPidginContactList   (customFloating $ contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow (customFloating $ centeredRect )
     ]
@@ -97,7 +118,7 @@ tmux session = myTerminal ++ " -name "  ++ session ++ " -e zsh -i -c \"tas " ++ 
 centeredRect   = W.RationalRect 0.2 0.2 0.6 0.6
 upperBarRect   = W.RationalRect 0.0 0.0 1.0 0.4
 rightBarRect   = W.RationalRect 0.5 0.0 0.5 1.0
-leftBarRect    = W.RationalRect 0.0 0.0 0.5 0.9
+leftBarRect    = W.RationalRect 0.0 0.0 0.5 1.0
 contactBarRect = W.RationalRect 0.9 0.0 0.1 1.0
 upperRightRect = W.RationalRect 0.5 0.0 0.5 0.5
 lowerRightRect = W.RationalRect 0.5 0.5 0.5 0.5
@@ -106,7 +127,7 @@ upperLeftRect  = W.RationalRect 0.0 0.0 0.5 0.5
 -- explicit list of tags
 tags :: [Tag]
 tags = [ 'e' -- editor
-       , 'd' -- project-related documentation
+       , 'b' -- project-related documentation
        , 'o' -- org mode: project-related org or similar
        , 'x' -- assign freely, 'extended'
        ]
@@ -133,7 +154,7 @@ workspaceMask       = myModMask
 
 main :: IO ()
 main = xmonad $ dynamicProjects projects defaultConfig
-  { borderWidth        = 2
+  { borderWidth        = 1
   , modMask            = myModMask
   , terminal           = myTerminal
   , workspaces         = myWorkspaces
@@ -145,16 +166,19 @@ main = xmonad $ dynamicProjects projects defaultConfig
   , focusedBorderColor = "#cd8b00" }
 
 myLayoutHook = noBorders
-        . smartSpacing 1
+        . smartSpacingWithEdge 5
         . mkToggle (NOBORDERS ?? NBFULL ?? EOT)
         $ myLayout
 
-myLayout = simplestFloat ||| Full
+-- myLayout = simplestFloat ||| tiled
+-- myLayout = windowNavigation $ subTabbed $ boringWindows tiled
+myLayout = windowNavigation $ subLayout [] Simplest $ boringWindows outerLayout
   where
-     tiled   = Tall nmaster delta ratio
-     nmaster = 1
-     ratio   = 3/6
-     delta   = 5/100
+     outerLayout   = ResizableTall nmaster resizeDelta masterRatio slaveRatios
+     nmaster       = 1
+     resizeDelta   = 5/100
+     masterRatio   = 3/6
+     slaveRatios   = [2] -- make the first slave window twice the height of the rest
 
 -- submap to trigger / start applications
 appSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
@@ -172,19 +196,22 @@ appSubmap = M.fromList
 promptSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
 promptSubmap = M.fromList
   [ ( (0, xK_b), spawn "/home/pi/bin/browser")
-  , ( (0, xK_p), spawn "passmenu")
+  , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
   , ( (0, xK_g), goToSelected defaultGSConfig) -- %! Push window back into tiling
+  , ( (0, xK_w), connectToNetwork) -- %! Push window back into tiling
+  , ( (0, xK_p), gridselectWorkspace defaultGSConfig W.greedyView) -- %! Push window back into tiling
   ]
 
 -- submaps for less common window operations
 windowSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
 windowSubmap = M.fromList
-  [ ( (0, xK_s), withFocused $ windows . W.sink)
-  , ( (0, xK_f), withFocused float)
-  , ( (0, xK_l), sendMessage NextLayout)
-  , ( (0, xK_k), kill)
-  , ( (0, xK_h), withFocused hide)
+  [ ( (0, xK_s),         withFocused $ windows . W.sink)
+  , ( (shiftMask, xK_s), sinkAll)
+  , ( (0, xK_f),         withFocused float)
+  , ( (0, xK_l),         sendMessage NextLayout)
+  , ( (0, xK_k),         kill)
+  , ( (0, xK_h),         withFocused hide)
   ]
 
 mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
@@ -209,24 +236,39 @@ myMainKeys =
   , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
   , ( (myModMask, xK_b), runOrRaiseLocal "build")
   , ( (myModMask, xK_t), runOrRaiseLocal "test")
-  , ( (myModMask, xK_l), windowGo R False)
-  , ( (myModMask, xK_h), windowGo L False)
-  , ( (myModMask, xK_k), windowGo U False)
-  , ( (myModMask, xK_j), windowGo D False)
-  , ( (myModMask, xK_i), replicateM_ 3 $ withFocused $ sendKeyEvent 0 xK_z)
-  ]
+  -- , ( (myModMask, xK_l), windowGo R False)
+  -- , ( (myModMask, xK_h), windowGo L False)
+  -- , ( (myModMask, xK_k), windowGo U False)
+  -- , ( (myModMask, xK_j), windowGo D False)
 
--- | Send a key to the window
-sendKeyEvent :: ButtonMask -> KeySym -> Window -> X ()
-sendKeyEvent mask sym w = do
-  dpy <- asks display
-  io $ allocaXEvent $ \e -> do
-    rw      <- rootWindow dpy $ defaultScreen dpy
-    keyCode <- keysymToKeycode dpy sym
-    setEventType e keyPress
-    setKeyEvent e w rw 0 mask keyCode True
-    sendEvent dpy w False structureNotifyMask e
-  pure ()
+  -- SubLayout: merge windows, explode
+  , ( (myControlMask, xK_h), sendMessage $ pullGroup L)
+  , ( (myControlMask, xK_l), sendMessage $ pullGroup R)
+  , ( (myControlMask, xK_k), sendMessage $ pullGroup U)
+  , ( (myControlMask, xK_j), sendMessage $ pullGroup D)
+  , ( (myControlMask, xK_x), withFocused $ sendMessage . UnMerge)
+  , ( (myControlMask .|. shiftMask, xK_x), withFocused $ sendMessage . UnMergeAll)
+
+  -- SubLayout: iterate inside a single window
+  , ( (myModMask,   xK_n), onGroup W.focusDown')
+  , ( (myShiftMask, xK_p), onGroup W.focusUp')
+  , ( (myModMask, xK_l), sendMessage $ Go R)
+  , ( (myModMask, xK_h), sendMessage $ Go L)
+  , ( (myModMask, xK_k), sendMessage $ Go U)
+  , ( (myModMask, xK_j), sendMessage $ Go D)
+  , ( (myShiftMask, xK_l), sendMessage $ Swap R)
+  , ( (myShiftMask, xK_h), sendMessage $ Swap L)
+  , ( (myShiftMask, xK_k), sendMessage $ Swap U)
+  , ( (myShiftMask, xK_j), sendMessage $ Swap D)
+  , ( (myAltMask,   xK_BackSpace), sendMessage Shrink)
+  , ( (myAltMask,   xK_l), sendMessage Expand)
+  , ( (myAltMask,   xK_j), sendMessage MirrorShrink)
+  , ( (myAltMask,   xK_k), sendMessage MirrorExpand)
+
+  -- , ( (myModMask, xK_i), replicateM_ 3 $ withFocused $ sendKeyEvent 0 xK_z)
+  -- , ( (myShiftMask, xK_j), sendMessage $ IncMasterN (-1))
+  -- , ( (myShiftMask, xK_k), sendMessage $ IncMasterN 1)
+  ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
 myBaseKeys conf = myMainKeys ++
@@ -235,10 +277,14 @@ myBaseKeys conf = myMainKeys ++
 
   -- basic window switch via mod-{n,p}. Mix in shift to not bring front
   , ( (myShiftMask, xK_Return), promote)
-  , ( (myModMask,   xK_n), windows W.focusUp >> promote)
-  , ( (myModMask,   xK_p), windows W.focusDown >> promote)
-  , ( (myShiftMask, xK_n), windows W.focusUp)
-  , ( (myShiftMask, xK_p), windows W.focusDown)
+  -- , ( (myModMask,   xK_n), windows W.focusUp >> promote)
+  -- , ( (myModMask,   xK_p), windows W.focusDown >> promote)
+  -- , ( (myShiftMask, xK_n), windows W.focusUp)
+  -- , ( (myShiftMask, xK_p), windows W.focusDown)
+  -- , ( (myModMask,   xK_n), focusDown)
+  -- , ( (myModMask,   xK_p), focusUp)
+  , ( (myShiftMask, xK_n), windows W.swapDown)
+  , ( (myShiftMask, xK_p), windows W.swapUp)
 
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
@@ -247,25 +293,27 @@ myBaseKeys conf = myMainKeys ++
   , ( (myModMask,   xK_space), switchProjectPrompt    defaultXPConfig)
   , ( (myShiftMask, xK_space), changeProjectDirPrompt defaultXPConfig)
 
+  -- , ( (myModMask,   xK_f), withFocused $ \f -> windows =<< appEndo `fmap` runQuery doFullFloat f)
+
   -- move floating windows: snap to next barrier. Last param is a Maybe Int
   -- threshold in pixels but I couldn't find any impact;
   -- TODO: check snapMove sources to understand param
-  , ( (myShiftMask,   xK_h),  withFocused $ snapMove L Nothing)
-  , ( (myShiftMask,   xK_l),  withFocused $ snapMove R Nothing)
-  , ( (myShiftMask,   xK_k),  withFocused $ snapMove U Nothing)
-  , ( (myShiftMask,   xK_j),  withFocused $ snapMove D Nothing)
+  , ( (myShiftMask,   xK_a),  withFocused $ snapMove L Nothing)
+  , ( (myShiftMask,   xK_d),  withFocused $ snapMove R Nothing)
+  , ( (myShiftMask,   xK_w),  withFocused $ snapMove U Nothing)
+  , ( (myShiftMask,   xK_s),  withFocused $ snapMove D Nothing)
 
   -- resize floating windows, snapping
-  , ( (myControlMask, xK_h),  withFocused $ snapShrink R Nothing)
-  , ( (myControlMask, xK_l),  withFocused $ snapGrow   R Nothing)
-  , ( (myControlMask, xK_j),  withFocused $ snapGrow   D Nothing)
-  , ( (myControlMask, xK_k),  withFocused $ snapShrink D Nothing)
+  , ( (myControlMask, xK_a),  withFocused $ snapShrink R Nothing)
+  , ( (myControlMask, xK_d),  withFocused $ snapGrow   R Nothing)
+  , ( (myControlMask, xK_w),  withFocused $ snapShrink D Nothing)
+  , ( (myControlMask, xK_s),  withFocused $ snapGrow   D Nothing)
 
   -- resize floating windows, fixed steps
-  , ( (myAltMask,     xK_z), withFocused $ keysResizeWindow (-resizeStepSize, 0) (0, 0) )
-  , ( (myAltMask,     xK_l), withFocused $ keysResizeWindow (resizeStepSize,  0) (0, 0) )
-  , ( (myAltMask,     xK_j), withFocused $ keysResizeWindow (0, resizeStepSize)  (0, 0) )
-  , ( (myAltMask,     xK_k), withFocused $ keysResizeWindow (0, -resizeStepSize) (0, 0) )
+  , ( (myAltMask,     xK_a), withFocused $ keysResizeWindow (-resizeStepSize, 0) (0, 0) )
+  , ( (myAltMask,     xK_d), withFocused $ keysResizeWindow (resizeStepSize,  0) (0, 0) )
+  , ( (myAltMask,     xK_w), withFocused $ keysResizeWindow (0, -resizeStepSize) (0, 0) )
+  , ( (myAltMask,     xK_s), withFocused $ keysResizeWindow (0, resizeStepSize)  (0, 0) )
   ]
 
 myKeys :: XConfig Layout -> M.Map ( ButtonMask, KeySym ) ( X () )
@@ -277,8 +325,8 @@ myKeys conf = M.fromList $
   ++ buildTagKeys tags focusUpTagged
 
 tagControl :: [( ButtonMask, String -> X () )]
-tagControl = [ ( myModMask,     \k -> focusUpTagged   k >> promote)
-             , ( myShiftMask,   \k -> focusDownTagged k >> promote)
+tagControl = [ ( myModMask,     \k -> focusUpTagged   k)
+             , ( myShiftMask,   \k -> focusDownTagged k)
              , ( tagToggleMask, withFocused . toggleTag )
              ]
 
@@ -300,5 +348,24 @@ runOrRaiseLocal name = do
   raiseMaybe (spawn $ tmux localName) (resource =? localName)
   promote
 
+connectToNetwork :: X ()
+connectToNetwork = do
+  maybeCon <- gridselect defaultGSConfig myConnections
+  case maybeCon of
+    Just con -> spawn $ "sudo netctl switch-to " ++ con
+    Nothing  -> pure ()
+
 xmessage :: String -> X ()
 xmessage msg = spawn $ "xmessage '" ++ msg ++ "' -default okay"
+
+-- | Send a key to the window
+sendKeyEvent :: ButtonMask -> KeySym -> Window -> X ()
+sendKeyEvent mask sym w = do
+  dpy <- asks display
+  io $ allocaXEvent $ \e -> do
+    rw      <- rootWindow dpy $ defaultScreen dpy
+    keyCode <- keysymToKeycode dpy sym
+    setEventType e keyPress
+    setKeyEvent e w rw 0 mask keyCode True
+    sendEvent dpy w False structureNotifyMask e
+  pure ()
