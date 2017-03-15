@@ -11,6 +11,13 @@ import Debug.Trace
 -- - swap Up / down via shiftMod-[np] (inconsistent with tab-navigation)
 -- - spacing between windows (5px, also on edges)
 
+-- TODO: short term
+-- - change tag behavior: we don't want to pull the window into master
+-- - add tag behavior: use shift to pull the window into master
+-- - workspace-aware chromium sessions
+-- TODO: long term
+-- - automatically group some windows, e.g. all vimbs into a group
+
 
 import Control.Monad (replicateM_)
 import qualified Data.Map as M
