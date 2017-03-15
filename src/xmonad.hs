@@ -329,16 +329,16 @@ myKeys conf = M.fromList $
   [((m .|. workspaceMask, k), windows $ f i)
     | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
     , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
-  ++ buildTagKeys tags focusUpTagged
+  ++ buildTagKeys tags
 
 tagControl :: [( ButtonMask, String -> X () )]
-tagControl = [ ( myModMask,     \k -> focusUpTagged   k)
-             , ( myShiftMask,   \k -> focusDownTagged k)
+tagControl = [ ( myModMask,     \t -> focusUpTagged   t)
+             , ( myShiftMask,   \t -> focusDownTagged t)
              , ( tagToggleMask, withFocused . toggleTag )
              ]
 
-buildTagKeys :: [Tag] -> ( String -> X () ) -> [(( ButtonMask, KeySym ), X () )]
-buildTagKeys tagKeys action =
+buildTagKeys :: [Tag] -> [(( ButtonMask, KeySym ), X () )]
+buildTagKeys tagKeys =
   [ ( ( modMask, keyToCode M.! key ), action [key] ) | (modMask, action ) <- tagControl, key <- tagKeys ]
 
 toggleTag :: String -> Window -> X ()
