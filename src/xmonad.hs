@@ -14,11 +14,15 @@ import Debug.Trace
 -- TODO: short term
 -- - change tag behavior: we don't want to pull the window into master
 -- - add tag behavior: use shift to pull the window into master
--- - workspace-aware chromium sessions
+-- - workspace-aware chromium sessions: per-session tabs remembered
+
+-- - workspace-ware emacs sessions
 -- TODO: long term
 -- - automatically group some windows, e.g. all vimbs into a group
 
 
+-- keybinding overview:
+-- modMask: alt-gr (mod5Mask)
 import Control.Monad (replicateM_)
 import qualified Data.Map as M
 import Data.Monoid (Endo(..))
@@ -29,7 +33,7 @@ import XMonad.Prompt (defaultXPConfig)
 import qualified XMonad.StackSet as W
 
 import XMonad.Actions.CycleWS
-import XMonad.Actions.DynamicProjects (dynamicProjects, switchProjectPrompt, changeProjectDirPrompt)
+import XMonad.Actions.DynamicProjects (dynamicProjects, shiftToProjectPrompt, switchProjectPrompt, changeProjectDirPrompt)
 import XMonad.Actions.FloatKeys (keysResizeWindow)
 import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
 import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig, gridselect, gridselectWorkspace)
@@ -44,6 +48,7 @@ import XMonad.Actions.WindowGo (raiseMaybe)
 import XMonad.Hooks.ManageHelpers
 
 import XMonad.Layout.BoringWindows
+import XMonad.Layout.Decoration
 import XMonad.Layout.MultiToggle
 import XMonad.Layout.MultiToggle.Instances
 import XMonad.Layout.NoBorders (noBorders)
@@ -52,6 +57,8 @@ import XMonad.Layout.SimplestFloat (simplestFloat)
 import XMonad.Layout.Simplest
 import XMonad.Layout.Spacing (smartSpacingWithEdge)
 import XMonad.Layout.SubLayouts
+import XMonad.Layout.Tabbed
+import XMonad.Layout.TrackFloating (useTransientFor, trackFloating)
 import XMonad.Layout.WindowNavigation
 
 import XMonad.Util.NamedScratchpad
@@ -61,7 +68,7 @@ import MyWorkspaces
 type Tag = Char
 
 myWorkspaces :: [WorkspaceId]
-myWorkspaces = map show [1 .. 3 :: Int]
+myWorkspaces = ["scratch"]
 
 myTerminal, myBrowser, myEditor :: String
 myBrowser  = "vimb"
@@ -74,12 +81,13 @@ myConnections = zip connectionNames connectionNames
 myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
   <+> composeAll
-  [ title =? "xmessage"  --> doRectFloat centeredRect
-  , className =? "Vimb"  --> addTagHook "b"
-  , className =? "Emacs" --> addTagHook "e"
+  [ title =? "xmessage"    --> doRectFloat centeredRect
+  , className =? "Vimb"    --> addTagHook "b"
+  , className =? "Emacs"   --> addTagHook "e"
+  , role =? "browser-edit" --> doRectFloat lowerRightRect
   -- , pure True            --> doFloat -- catch-all to floating: disabled!
   ]
-
+    where role = stringProperty "WM_WINDOW_ROLE"
 addTagHook :: String -> ManageHook
 addTagHook tag = do
   w <- ask
@@ -179,7 +187,11 @@ myLayoutHook = noBorders
 
 -- myLayout = simplestFloat ||| tiled
 -- myLayout = windowNavigation $ subTabbed $ boringWindows tiled
-myLayout = windowNavigation $ subLayout [] Simplest $ boringWindows outerLayout
+myLayout = windowNavigation
+  . trackFloating
+  . useTransientFor
+  . addTabs shrinkText myTabTheme
+  . subLayout [] Simplest $ boringWindows outerLayout
   where
      outerLayout   = ResizableTall nmaster resizeDelta masterRatio slaveRatios
      nmaster       = 1
@@ -249,16 +261,18 @@ myMainKeys =
   -- , ( (myModMask, xK_j), windowGo D False)
 
   -- SubLayout: merge windows, explode
-  , ( (myControlMask, xK_h), sendMessage $ pullGroup L)
-  , ( (myControlMask, xK_l), sendMessage $ pullGroup R)
-  , ( (myControlMask, xK_k), sendMessage $ pullGroup U)
-  , ( (myControlMask, xK_j), sendMessage $ pullGroup D)
-  , ( (myControlMask, xK_x), withFocused $ sendMessage . UnMerge)
-  , ( (myControlMask .|. shiftMask, xK_x), withFocused $ sendMessage . UnMergeAll)
+  , ( (myAltMask, xK_BackSpace), sendMessage $ pullGroup L)
+  , ( (myAltMask, xK_l), sendMessage $ pullGroup R)
+  , ( (myAltMask, xK_k), sendMessage $ pullGroup U)
+  , ( (myAltMask, xK_j), sendMessage $ pullGroup D)
+  , ( (myAltMask, xK_x), withFocused $ sendMessage . UnMerge)
+  , ( (myAltMask .|. shiftMask, xK_x), withFocused $ sendMessage . UnMergeAll)
 
-  -- SubLayout: iterate inside a single window
-  , ( (myModMask,   xK_n), onGroup W.focusDown')
-  , ( (myShiftMask, xK_p), onGroup W.focusUp')
+  -- SubLayout: iterate inside a single group
+  , ( (myModMask, xK_n), onGroup W.focusDown')
+  , ( (myModMask, xK_p), onGroup W.focusUp')
+
+  -- SubLayout: go / swap in the four directions
   , ( (myModMask, xK_l), sendMessage $ Go R)
   , ( (myModMask, xK_h), sendMessage $ Go L)
   , ( (myModMask, xK_k), sendMessage $ Go U)
@@ -267,10 +281,10 @@ myMainKeys =
   , ( (myShiftMask, xK_h), sendMessage $ Swap L)
   , ( (myShiftMask, xK_k), sendMessage $ Swap U)
   , ( (myShiftMask, xK_j), sendMessage $ Swap D)
-  , ( (myAltMask,   xK_BackSpace), sendMessage Shrink)
-  , ( (myAltMask,   xK_l), sendMessage Expand)
-  , ( (myAltMask,   xK_j), sendMessage MirrorShrink)
-  , ( (myAltMask,   xK_k), sendMessage MirrorExpand)
+  , ( (myControlMask,   xK_h), sendMessage Shrink)
+  , ( (myControlMask,   xK_l), sendMessage Expand)
+  , ( (myControlMask,   xK_j), sendMessage MirrorShrink)
+  , ( (myControlMask,   xK_k), sendMessage MirrorExpand)
 
   -- , ( (myModMask, xK_i), replicateM_ 3 $ withFocused $ sendKeyEvent 0 xK_z)
   -- , ( (myShiftMask, xK_j), sendMessage $ IncMasterN (-1))
@@ -290,15 +304,18 @@ myBaseKeys conf = myMainKeys ++
   -- , ( (myShiftMask, xK_p), windows W.focusDown)
   -- , ( (myModMask,   xK_n), focusDown)
   -- , ( (myModMask,   xK_p), focusUp)
-  , ( (myShiftMask, xK_n), windows W.swapDown)
-  , ( (myShiftMask, xK_p), windows W.swapUp)
+  , ( (myShiftMask, xK_n),   windows W.swapDown)
+  , ( (myShiftMask, xK_p),   windows W.swapUp)
+  , ( (myModMask,   xK_Tab), windows W.focusDown)
+  , ( (myShiftMask, xK_Tab), windows W.focusDown)
 
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
   , ( (myModMask,   xK_space), switchProjectPrompt    defaultXPConfig)
-  , ( (myShiftMask, xK_space), changeProjectDirPrompt defaultXPConfig)
+  , ( (myShiftMask, xK_space), shiftToProjectPrompt   defaultXPConfig)
+  , ( (myAltMask,   xK_space), changeProjectDirPrompt defaultXPConfig)
 
   -- , ( (myModMask,   xK_f), withFocused $ \f -> windows =<< appEndo `fmap` runQuery doFullFloat f)
 
@@ -376,3 +393,35 @@ sendKeyEvent mask sym w = do
     setKeyEvent e w rw 0 mask keyCode True
     sendEvent dpy w False structureNotifyMask e
   pure ()
+
+-- curtesy of ethanschoonover config somewhere over at github
+myTabTheme = def
+    { fontName              = myFont
+    , activeColor           = active
+    , inactiveColor         = base02
+    , activeBorderColor     = active
+    , inactiveBorderColor   = base02
+    , activeTextColor       = base03
+    , inactiveTextColor     = base00
+    }
+
+myFont      = "-*-terminus-medium-*-*-*-*-160-*-*-*-*-*-*"
+
+active      = blue
+
+base03  = "#002b36"
+base02  = "#073642"
+base01  = "#586e75"
+base00  = "#657b83"
+base0   = "#839496"
+base1   = "#93a1a1"
+base2   = "#eee8d5"
+base3   = "#fdf6e3"
+yellow  = "#b58900"
+orange  = "#cb4b16"
+red     = "#dc322f"
+magenta = "#d33682"
+violet  = "#6c71c4"
+blue    = "#268bd2"
+cyan    = "#2aa198"
+green       = "#859900"
