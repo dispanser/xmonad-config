@@ -47,8 +47,10 @@ import XMonad.Actions.WindowGo (raiseMaybe)
 
 import XMonad.Hooks.ManageHelpers
 
+import XMonad.Layout.Accordion
 import XMonad.Layout.BoringWindows
 import XMonad.Layout.Decoration
+import XMonad.Layout.Hidden (hiddenWindows, hideWindow, popOldestHiddenWindow, popNewestHiddenWindow)
 import XMonad.Layout.MultiToggle
 import XMonad.Layout.MultiToggle.Instances
 import XMonad.Layout.NoBorders (noBorders)
@@ -68,7 +70,7 @@ import MyWorkspaces
 type Tag = Char
 
 myWorkspaces :: [WorkspaceId]
-myWorkspaces = ["scratch"]
+myWorkspaces = []
 
 myTerminal, myBrowser, myEditor :: String
 myBrowser  = "vimb"
@@ -185,19 +187,18 @@ myLayoutHook = noBorders
         . mkToggle (NOBORDERS ?? NBFULL ?? EOT)
         $ myLayout
 
--- myLayout = simplestFloat ||| tiled
--- myLayout = windowNavigation $ subTabbed $ boringWindows tiled
 myLayout = windowNavigation
   . trackFloating
   . useTransientFor
+  . hiddenWindows
   . addTabs shrinkText myTabTheme
   . subLayout [] Simplest $ boringWindows outerLayout
   where
-     outerLayout   = ResizableTall nmaster resizeDelta masterRatio slaveRatios
+     outerLayout   = ResizableTall nmaster resizeDelta masterRatio slaveRatios ||| Accordion
      nmaster       = 1
      resizeDelta   = 5/100
      masterRatio   = 3/6
-     slaveRatios   = [2] -- make the first slave window twice the height of the rest
+     slaveRatios   = [] -- not working as expected
 
 -- submap to trigger / start applications
 appSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
@@ -230,7 +231,9 @@ windowSubmap = M.fromList
   , ( (0, xK_f),         withFocused float)
   , ( (0, xK_l),         sendMessage NextLayout)
   , ( (0, xK_k),         kill)
-  , ( (0, xK_h),         withFocused hide)
+  , ( (0, xK_h),         withFocused hideWindow)
+  , ( (0, xK_r),         popOldestHiddenWindow)
+  , ( (shiftMask, xK_r), popNewestHiddenWindow)
   ]
 
 mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
