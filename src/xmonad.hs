@@ -53,12 +53,14 @@ import XMonad.Layout.Decoration
 import XMonad.Layout.Hidden (hiddenWindows, hideWindow, popOldestHiddenWindow, popNewestHiddenWindow)
 import XMonad.Layout.MultiToggle
 import XMonad.Layout.MultiToggle.Instances
+import XMonad.Layout.NoFrillsDecoration
 import XMonad.Layout.NoBorders (noBorders)
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.SimplestFloat (simplestFloat)
 import XMonad.Layout.Simplest
-import XMonad.Layout.Spacing (smartSpacingWithEdge)
+import XMonad.Layout.Spacing (spacingWithEdge, smartSpacingWithEdge, spacing)
 import XMonad.Layout.SubLayouts
+import XMonad.Layout.TabBarDecoration
 import XMonad.Layout.Tabbed
 import XMonad.Layout.TrackFloating (useTransientFor, trackFloating)
 import XMonad.Layout.WindowNavigation
@@ -183,22 +185,26 @@ main = xmonad $ dynamicProjects projects defaultConfig
   , focusedBorderColor = "#cd8b00" }
 
 myLayoutHook = noBorders
-        . smartSpacingWithEdge 5
-        . mkToggle (NOBORDERS ?? NBFULL ?? EOT)
-        $ myLayout
-
-myLayout = windowNavigation
-  . trackFloating
-  . useTransientFor
-  . hiddenWindows
-  . addTabs shrinkText myTabTheme
-  . subLayout [] Simplest $ boringWindows outerLayout
+               . mkToggle (NOBORDERS ?? NBFULL ?? EOT)
+               . windowNavigation
+               . trackFloating
+               . useTransientFor
+               . hiddenWindows
+               . addTopBar
+               . addTabs shrinkText myTabTheme
+               . spacingWithEdge 5
+               . subLayout [] Simplest $ boringWindows outerLayout
   where
-     outerLayout   = ResizableTall nmaster resizeDelta masterRatio slaveRatios ||| Accordion
-     nmaster       = 1
-     resizeDelta   = 5/100
-     masterRatio   = 3/6
-     slaveRatios   = [] -- not working as expected
+    addTopBar     = noFrillsDeco shrinkText topBarTheme
+    outerLayout   = ResizableTall nmaster resizeDelta masterRatio slaveRatios ||| Accordion
+    nmaster       = 1
+    resizeDelta   = 5/100
+    masterRatio   = 3/6
+    -- the ratios seem to contain the master window in the computation. if first and
+    -- second entry are identical, a third window will have size 0.
+    -- the current setting makes the second window twice the size of the third (if there
+    -- are only three)
+    slaveRatios   = [1.6, 1.3]
 
 -- submap to trigger / start applications
 appSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
@@ -406,9 +412,25 @@ myTabTheme = def
     , inactiveBorderColor   = base02
     , activeTextColor       = base03
     , inactiveTextColor     = base00
+    , decoHeight            = 12
     }
 
-myFont      = "-*-terminus-medium-*-*-*-*-160-*-*-*-*-*-*"
+topBarTheme = def
+    { fontName              = myFont
+    , inactiveBorderColor   = base03
+    , inactiveColor         = base03
+    , inactiveTextColor     = base03
+    , activeBorderColor     = active
+    , activeColor           = active
+    , activeTextColor       = active
+    , urgentBorderColor     = red
+    , urgentTextColor       = yellow
+    , decoHeight            = topbar
+    }
+
+topbar      = 5
+
+myFont      = "-*-terminus-medium-*-*-*-*-190-*-*-*-*-*-*"
 
 active      = blue
 
@@ -427,4 +449,4 @@ magenta = "#d33682"
 violet  = "#6c71c4"
 blue    = "#268bd2"
 cyan    = "#2aa198"
-green       = "#859900"
+green   = "#859900"
