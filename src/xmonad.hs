@@ -33,6 +33,7 @@ import XMonad.Prompt (defaultXPConfig)
 import qualified XMonad.StackSet as W
 
 import XMonad.Actions.CycleWS
+import XMonad.Actions.DynamicWorkspaces (withNthWorkspace)
 import XMonad.Actions.DynamicProjects (dynamicProjects, shiftToProjectPrompt, switchProjectPrompt, changeProjectDirPrompt)
 import XMonad.Actions.FloatKeys (keysResizeWindow)
 import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
@@ -185,7 +186,6 @@ main = xmonad $ dynamicProjects projects defaultConfig
   , focusedBorderColor = "#cd8b00" }
 
 myLayoutHook = noBorders
-               . mkToggle (NOBORDERS ?? NBFULL ?? EOT)
                . windowNavigation
                . trackFloating
                . useTransientFor
@@ -193,10 +193,13 @@ myLayoutHook = noBorders
                . addTopBar
                . addTabs shrinkText myTabTheme
                . spacingWithEdge 5
-               . subLayout [] Simplest $ boringWindows outerLayout
+               . mkToggle (FULL ?? MIRROR ?? EOT)
+               . subLayout [] innerLayout $ boringWindows outerLayout
   where
     addTopBar     = noFrillsDeco shrinkText topBarTheme
-    outerLayout   = ResizableTall nmaster resizeDelta masterRatio slaveRatios ||| Accordion
+    tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios 
+    outerLayout   = tallLayout ||| Accordion
+    innerLayout   = Simplest ||| Accordion
     nmaster       = 1
     resizeDelta   = 5/100
     masterRatio   = 3/6
@@ -236,6 +239,7 @@ windowSubmap = M.fromList
   , ( (shiftMask, xK_s), sinkAll)
   , ( (0, xK_f),         withFocused float)
   , ( (0, xK_l),         sendMessage NextLayout)
+  , ( (0, xK_i),         toSubl NextLayout)
   , ( (0, xK_k),         kill)
   , ( (0, xK_h),         withFocused hideWindow)
   , ( (0, xK_r),         popOldestHiddenWindow)
@@ -260,7 +264,8 @@ myMainKeys =
   , ( (myModMask, xK_m), namedScratchpadAction scratchpads "_mail")
   , ( (myModMask, xK_c), namedScratchpadAction scratchpads "chromium")
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
-  , ( (myModMask, xK_f), sendMessage $ Toggle NBFULL)
+  , ( (myModMask, xK_f), sendMessage $ Toggle FULL)
+  , ( (myModMask, xK_v), sendMessage $ Toggle MIRROR)
   , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
   , ( (myModMask, xK_b), runOrRaiseLocal "build")
   , ( (myModMask, xK_t), runOrRaiseLocal "test")
@@ -324,7 +329,7 @@ myBaseKeys conf = myMainKeys ++
   , ( (myShiftMask, xK_s), shiftNextScreen)
   , ( (myModMask,   xK_space), switchProjectPrompt    defaultXPConfig)
   , ( (myShiftMask, xK_space), shiftToProjectPrompt   defaultXPConfig)
-  , ( (myAltMask,   xK_space), changeProjectDirPrompt defaultXPConfig)
+  , ( (myControlMask,xK_space), changeProjectDirPrompt defaultXPConfig)
 
   -- , ( (myModMask,   xK_f), withFocused $ \f -> windows =<< appEndo `fmap` runQuery doFullFloat f)
 
@@ -351,10 +356,13 @@ myBaseKeys conf = myMainKeys ++
 
 myKeys :: XConfig Layout -> M.Map ( ButtonMask, KeySym ) ( X () )
 myKeys conf = M.fromList $
-  myBaseKeys conf ++
-  [((m .|. workspaceMask, k), windows $ f i)
-    | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
-    , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
+  myBaseKeys conf
+  -- [ ( myModMask, xK_0 ), withNthWorkspace . W.greedyView]
+  -- TODO: withNthWorkspace
+  -- [((m .|. workspaceMask, k), windows $ f i)
+  --   | (i, k) <- zip [0 ..] [xK_1 .. xK_9]
+  --   , (f, m) <- [(withNthWorkspace W.greedyView, 0),
+  --                (withNthWorkspace W.shift, shiftMask)]]
   ++ buildTagKeys tags
 
 tagControl :: [( ButtonMask, String -> X () )]
