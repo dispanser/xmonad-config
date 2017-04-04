@@ -89,6 +89,7 @@ myManageHook = namedScratchpadManageHook scratchpads
   [ title =? "xmessage"    --> doRectFloat centeredRect
   , className =? "Vimb"    --> addTagHook "b"
   , className =? "Emacs"   --> addTagHook "e"
+  , className =? "Gvim"    --> addTagHook "v"
   , role =? "browser-edit" --> doRectFloat lowerRightRect
   -- , pure True            --> doFloat -- catch-all to floating: disabled!
   ]
@@ -146,10 +147,11 @@ upperLeftRect  = W.RationalRect 0.0 0.0 0.5 0.5
 
 -- explicit list of tags
 tags :: [Tag]
-tags = [ 'e' -- editor
-       , 'b' -- project-related documentation
-       , 'o' -- org mode: project-related org or similar
-       , 'x' -- assign freely, 'extended'
+tags = [ 'b' -- project-related documentation (auto-assigned to vimb)
+       , 'e' -- editor / emacs (auto-assigned to emacs instances)
+       , 'o' -- org mode: project-related org or similar (not auto-assigned)
+       , 'v' -- vim instance
+       , 'x' -- assign freely, 'extended' 
        ]
 
 -- simple thing that checks all potential sources for keybindings for our main mask:
