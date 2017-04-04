@@ -227,7 +227,8 @@ appSubmap = M.fromList
 -- submaps for various prompt-based actions
 promptSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
 promptSubmap = M.fromList
-  [ ( (0, xK_b), spawn "/home/pi/bin/browser")
+  [ ( (0, xK_b), spawn $ "/home/pi/bin/browser-dmenu" ++ myBrowser)
+  , ( (0, xK_c), spawn "/home/pi/bin/browser-dmenu chromium")
   , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
   , ( (0, xK_g), goToSelected defaultGSConfig) -- %! Push window back into tiling
