@@ -102,12 +102,13 @@ addTagHook tag = do
 
 scratchpads :: [NamedScratchpad]
 scratchpads =
-    [ shellScratchpad "htop"   ( customFloating $ centeredRect )
-    , tmuxScratchpad "_mail"   ( customFloating $ centeredRect )
-    , tmuxScratchpad "hud"     ( customFloating $ upperBarRect )
-    , NS "chromium" "chromium" (className =? "Chromium") ( customFloating $ leftBarRect )
-    , NS "pidgin_contacts" "pidgin" isPidginContactList   (customFloating $ contactBarRect )
-    , NS "pidgin_messages" "pidgin" isPidginMessageWindow (customFloating $ centeredRect )
+    [ shellScratchpad "htop"                              ( customFloating centeredRect )
+    , tmuxScratchpad "_mail"                              ( customFloating centeredRect )
+    , tmuxScratchpad "hud"                                ( customFloating upperBarRect )
+    , NS "gtd" "emacs -T gtd /home/pi/gtd/master.org" (title =? "gtd") ( customFloating centeredRect )
+    , NS "chromium" "chromium" (className =? "Chromium")  ( customFloating leftBarRect )
+    , NS "pidgin_contacts" "pidgin" isPidginContactList   ( customFloating contactBarRect )
+    , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating centeredRect )
     ]
 
 isPidginContactList, isPidginMessageWindow, isPidginClass, isBuddy :: Query Bool
