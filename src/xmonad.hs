@@ -392,7 +392,6 @@ runOrRaiseLocal name = do
   workspace <- gets (W.currentTag . windowset)
   let localName = workspace ++ "_" ++ name
   raiseMaybe (spawn $ tmux localName) (resource =? localName)
-  promote
 
 connectToNetwork :: X ()
 connectToNetwork = do
