@@ -80,7 +80,7 @@ myBrowser  = "vimb"
 myEditor   = "emacsclient -c"
 myTerminal = "urxvt"
 
-connectionNames = [ "Saaleblick", "lambda", "peta", "bahn", "tomtom-internal" ]
+connectionNames = [ "Saaleblick", "lambda", "sigma", "bahn", "tomtom-internal" ]
 myConnections = zip connectionNames connectionNames
 
 myManageHook :: ManageHook
