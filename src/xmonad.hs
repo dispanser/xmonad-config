@@ -103,13 +103,21 @@ addTagHook tag = do
 scratchpads :: [NamedScratchpad]
 scratchpads =
     [ shellScratchpad "htop"                              ( customFloating centeredRect )
+    , shellScratchpad "journalctl -xf"                    ( customFloating centeredRect )
     , tmuxScratchpad "_mail"                              ( customFloating centeredRect )
     , tmuxScratchpad "hud"                                ( customFloating upperBarRect )
-    , NS "gtd" "emacs -T gtd /home/pi/gtd/master.org" (title =? "gtd") ( customFloating centeredRect )
+    , emacsScratchpad "gtd" "/home/pi/gtd/master.org"     ( customFloating centeredRect )
+    , emacsScratchpad "scratch" "/tmp/scratch"            ( customFloating centeredRect )
     , NS "chromium" "chromium" (className =? "Chromium")  ( customFloating leftBarRect )
     , NS "pidgin_contacts" "pidgin" isPidginContactList   ( customFloating contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating centeredRect )
     ]
+
+emacsScratchpad :: String -> String -> ManageHook -> NamedScratchpad
+emacsScratchpad name file = NS name command query
+  where
+    command = "emacs -T " ++ name ++ " " ++ file
+    query   = title =? name
 
 isPidginContactList, isPidginMessageWindow, isPidginClass, isBuddy :: Query Bool
 isPidginContactList   = isPidginClass <&&> isBuddy
@@ -222,12 +230,14 @@ appSubmap = M.fromList
   , ( (0, xK_v), spawn "gvim")
   , ( (0, xK_p), spawn "pidgin")
   , ( (0, xK_h), namedScratchpadAction scratchpads "htop")
+  , ( (0, xK_l), namedScratchpadAction scratchpads "journalctl -xf")
+
   ]
 
 -- submaps for various prompt-based actions
 promptSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
 promptSubmap = M.fromList
-  [ ( (0, xK_b), spawn $ "/home/pi/bin/browser-dmenu" ++ myBrowser)
+  [ ( (0, xK_b), spawn $ "/home/pi/bin/browser-dmenu " ++ myBrowser)
   , ( (0, xK_c), spawn "/home/pi/bin/browser-dmenu chromium")
   , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
@@ -269,6 +279,7 @@ myMainKeys =
   , ( (myModMask, xK_c), namedScratchpadAction scratchpads "chromium")
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
   , ( (myModMask, xK_g), namedScratchpadAction scratchpads "gtd")
+  , ( (myModMask, xK_backslash), namedScratchpadAction scratchpads "scratch")
   , ( (myModMask, xK_f), sendMessage $ Toggle FULL)
   , ( (myModMask, xK_slash), sendMessage $ Toggle MIRROR)
   , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
