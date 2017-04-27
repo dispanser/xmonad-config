@@ -268,7 +268,7 @@ myMainKeys =
   [ ( (myModMask, xK_a), mySubmap appSubmap)
   , ( (myModMask, xK_z), mySubmap promptSubmap)
   , ( (myModMask, xK_w), mySubmap windowSubmap)
-  , ( (myModMask, xK_r), toggleWS' ["NSP"])
+  , ( (myModMask, xK_r), toggleWS' ["NSP", "eclipse"])
   , ( (myModMask, xK_s), nextScreen)
   , ( (myModMask, xK_m), namedScratchpadAction scratchpads "_mail")
   , ( (myModMask, xK_c), namedScratchpadAction scratchpads "chromium")
@@ -277,7 +277,6 @@ myMainKeys =
   , ( (myModMask, xK_backslash), namedScratchpadAction scratchpads "scratch")
   , ( (myModMask, xK_f), sendMessage $ Toggle FULL)
   , ( (myModMask, xK_slash), sendMessage $ Toggle MIRROR)
-  , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
   , ( (myModMask, xK_b), runOrRaiseLocal "build")
   , ( (myModMask, xK_t), runOrRaiseLocal "test")
 
@@ -321,8 +320,8 @@ myBaseKeys conf = myMainKeys ++
   , ( (myShiftMask, xK_Return), promote)
   , ( (myShiftMask, xK_n),   windows W.swapDown)
   , ( (myShiftMask, xK_p),   windows W.swapUp)
-  , ( (myModMask,   xK_n), windows W.focusDown)
-  , ( (myModMask,   xK_p), windows W.focusUp)
+  , ( (myModMask,   xK_n),   windows W.focusDown)
+  , ( (myModMask,   xK_p),   windows W.focusUp)
 
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
@@ -331,6 +330,7 @@ myBaseKeys conf = myMainKeys ++
   , ( (myModMask,   xK_space), switchProjectPrompt    defaultXPConfig)
   , ( (myShiftMask, xK_space), shiftToProjectPrompt   defaultXPConfig)
   , ( (myControlMask,xK_space), changeProjectDirPrompt defaultXPConfig)
+  , ( (myModMask,   xK_i), windows $ W.greedyView "eclipse")
 
   -- , ( (myModMask,   xK_f), withFocused $ \f -> windows =<< appEndo `fmap` runQuery doFullFloat f)
 
