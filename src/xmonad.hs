@@ -230,8 +230,10 @@ appSubmap = M.fromList
   , ( (0, xK_v), spawn "gvim")
   , ( (0, xK_p), spawn "pidgin")
   , ( (0, xK_h), namedScratchpadAction scratchpads "htop")
+  -- TODO: logging scratchpad doesn't work very well, probably because
+  -- the command takes parameters, so the name of the window doeesn't
+  -- properly match the command line supplied arg
   , ( (0, xK_l), namedScratchpadAction scratchpads "journalctl -xf")
-
   ]
 
 -- submaps for various prompt-based actions
