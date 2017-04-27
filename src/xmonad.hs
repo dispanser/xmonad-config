@@ -51,7 +51,6 @@ import XMonad.Hooks.ManageHelpers
 import XMonad.Layout.Accordion
 import XMonad.Layout.BoringWindows
 import XMonad.Layout.Decoration
-import XMonad.Layout.Hidden (hiddenWindows, hideWindow, popOldestHiddenWindow, popNewestHiddenWindow)
 import XMonad.Layout.MultiToggle
 import XMonad.Layout.MultiToggle.Instances
 import XMonad.Layout.NoFrillsDecoration
@@ -200,7 +199,6 @@ myLayoutHook = noBorders
                . windowNavigation
                . trackFloating
                . useTransientFor
-               . hiddenWindows
                . addTopBar
                . addTabs shrinkText myTabTheme
                . spacingWithEdge 5
@@ -255,9 +253,6 @@ windowSubmap = M.fromList
   , ( (0, xK_l),         sendMessage NextLayout)
   , ( (0, xK_i),         toSubl NextLayout)
   , ( (0, xK_k),         kill)
-  , ( (0, xK_h),         withFocused hideWindow)
-  , ( (0, xK_r),         popOldestHiddenWindow)
-  , ( (shiftMask, xK_r), popNewestHiddenWindow)
   ]
 
 mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
