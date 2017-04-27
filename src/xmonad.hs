@@ -32,7 +32,7 @@ import XMonad.ManageHook
 import XMonad.Prompt (defaultXPConfig)
 import qualified XMonad.StackSet as W
 
-import XMonad.Actions.CycleWS
+import XMonad.Actions.CycleWS (nextScreen, shiftNextScreen, toggleWS')
 import XMonad.Actions.DynamicWorkspaces (withNthWorkspace)
 import XMonad.Actions.DynamicProjects (dynamicProjects, shiftToProjectPrompt, switchProjectPrompt, changeProjectDirPrompt)
 import XMonad.Actions.FloatKeys (keysResizeWindow)
@@ -267,10 +267,6 @@ myMainKeys =
   , ( (myModMask, xK_z), mySubmap promptSubmap)
   , ( (myModMask, xK_w), mySubmap windowSubmap)
   , ( (myModMask, xK_r), toggleWS' ["NSP"])
-  , ( (myModMask, xK_period), nextWS)
-  , ( (myModMask, xK_comma),  prevWS)
-  , ( (myShiftMask, xK_period), shiftToNext)
-  , ( (myShiftMask, xK_comma),  shiftToPrev)
   , ( (myModMask, xK_s), nextScreen)
   , ( (myModMask, xK_m), namedScratchpadAction scratchpads "_mail")
   , ( (myModMask, xK_c), namedScratchpadAction scratchpads "chromium")
