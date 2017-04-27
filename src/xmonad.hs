@@ -278,10 +278,24 @@ myMainKeys =
   , ( (myModMask, xK_0), windows $ W.greedyView "NSP")
   , ( (myModMask, xK_b), runOrRaiseLocal "build")
   , ( (myModMask, xK_t), runOrRaiseLocal "test")
-  -- , ( (myModMask, xK_l), windowGo R False)
-  -- , ( (myModMask, xK_h), windowGo L False)
-  -- , ( (myModMask, xK_k), windowGo U False)
-  -- , ( (myModMask, xK_j), windowGo D False)
+
+  -- SubLayout: iterate inside a single group
+  , ( (myModMask, xK_period), onGroup W.focusDown')
+  , ( (myModMask, xK_comma), onGroup W.focusUp')
+
+  -- SubLayout: go / swap in the four directions
+  , ( (myModMask, xK_l),   sendMessage $ Go R)
+  , ( (myModMask, xK_h),   sendMessage $ Go L)
+  , ( (myModMask, xK_k),   sendMessage $ Go U)
+  , ( (myModMask, xK_j),   sendMessage $ Go D)
+  , ( (myShiftMask, xK_l), sendMessage $ Swap R)
+  , ( (myShiftMask, xK_h), sendMessage $ Swap L)
+  , ( (myShiftMask, xK_k), sendMessage $ Swap U)
+  , ( (myShiftMask, xK_j), sendMessage $ Swap D)
+  , ( (myControlMask, xK_h), sendMessage Shrink)
+  , ( (myControlMask, xK_l), sendMessage Expand)
+  , ( (myControlMask, xK_j), sendMessage MirrorShrink)
+  , ( (myControlMask, xK_k), sendMessage MirrorExpand)
 
   -- SubLayout: merge windows, explode
   , ( (myAltMask, xK_BackSpace), sendMessage $ pullGroup L)
@@ -290,24 +304,6 @@ myMainKeys =
   , ( (myAltMask, xK_j), sendMessage $ pullGroup D)
   , ( (myAltMask, xK_x), withFocused $ sendMessage . UnMerge)
   , ( (myAltMask .|. shiftMask, xK_x), withFocused $ sendMessage . UnMergeAll)
-
-  -- SubLayout: iterate inside a single group
-  , ( (myModMask, xK_n), onGroup W.focusDown')
-  , ( (myModMask, xK_p), onGroup W.focusUp')
-
-  -- SubLayout: go / swap in the four directions
-  , ( (myModMask, xK_l), sendMessage $ Go R)
-  , ( (myModMask, xK_h), sendMessage $ Go L)
-  , ( (myModMask, xK_k), sendMessage $ Go U)
-  , ( (myModMask, xK_j), sendMessage $ Go D)
-  , ( (myShiftMask, xK_l), sendMessage $ Swap R)
-  , ( (myShiftMask, xK_h), sendMessage $ Swap L)
-  , ( (myShiftMask, xK_k), sendMessage $ Swap U)
-  , ( (myShiftMask, xK_j), sendMessage $ Swap D)
-  , ( (myControlMask,   xK_h), sendMessage Shrink)
-  , ( (myControlMask,   xK_l), sendMessage Expand)
-  , ( (myControlMask,   xK_j), sendMessage MirrorShrink)
-  , ( (myControlMask,   xK_k), sendMessage MirrorExpand)
 
   -- , ( (myModMask, xK_i), replicateM_ 3 $ withFocused $ sendKeyEvent 0 xK_z)
   -- , ( (myShiftMask, xK_j), sendMessage $ IncMasterN (-1))
@@ -321,16 +317,10 @@ myBaseKeys conf = myMainKeys ++
 
   -- basic window switch via mod-{n,p}. Mix in shift to not bring front
   , ( (myShiftMask, xK_Return), promote)
-  -- , ( (myModMask,   xK_n), windows W.focusUp >> promote)
-  -- , ( (myModMask,   xK_p), windows W.focusDown >> promote)
-  -- , ( (myShiftMask, xK_n), windows W.focusUp)
-  -- , ( (myShiftMask, xK_p), windows W.focusDown)
-  -- , ( (myModMask,   xK_n), focusDown)
-  -- , ( (myModMask,   xK_p), focusUp)
   , ( (myShiftMask, xK_n),   windows W.swapDown)
   , ( (myShiftMask, xK_p),   windows W.swapUp)
-  , ( (myModMask,   xK_Tab), windows W.focusDown)
-  , ( (myShiftMask, xK_Tab), windows W.focusDown)
+  , ( (myModMask,   xK_n), windows W.focusDown)
+  , ( (myModMask,   xK_p), windows W.focusUp)
 
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
