@@ -203,10 +203,12 @@ myLayoutHook = noBorders
                . addTabs shrinkText myTabTheme
                . spacingWithEdge 5
                . mkToggle (FULL ?? MIRROR ?? EOT)
-               . subLayout [] innerLayout $ boringWindows outerLayout
+               $ tabs ||| subs
   where
+    subs          = subLayout [] innerLayout $ boringWindows outerLayout
+    tabs          = Simplest
     addTopBar     = noFrillsDeco shrinkText topBarTheme
-    tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios 
+    tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
     outerLayout   = tallLayout ||| Accordion
     innerLayout   = Simplest ||| Accordion
     nmaster       = 1
