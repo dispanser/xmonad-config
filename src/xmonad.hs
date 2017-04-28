@@ -26,6 +26,7 @@ import Debug.Trace
 import Control.Monad (replicateM_)
 import qualified Data.Map as M
 import Data.Monoid (Endo(..))
+import Data.List (isSuffixOf)
 
 import XMonad
 import XMonad.ManageHook
@@ -44,7 +45,7 @@ import XMonad.Actions.SinkAll (sinkAll)
 import XMonad.Actions.Submap (submap)
 import XMonad.Actions.TagWindows (addTag, delTag, focusDownTagged, focusUpTagged, hasTag)
 import XMonad.Actions.UpdatePointer (updatePointer)
-import XMonad.Actions.WindowGo (raiseMaybe)
+import XMonad.Actions.WindowGo (ifWindow, raiseMaybe, raiseHook)
 
 import XMonad.Hooks.ManageHelpers
 
@@ -86,6 +87,7 @@ myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
   <+> composeAll
   [ title =? "xmessage"    --> doRectFloat centeredRect
+  , appName `endsWith` "_overlay" --> doRectFloat centeredRect
   , className =? "Vimb"    --> addTagHook "b"
   , className =? "Emacs"   --> addTagHook "e"
   , className =? "Gvim"    --> addTagHook "v"
@@ -93,6 +95,8 @@ myManageHook = namedScratchpadManageHook scratchpads
   -- , pure True            --> doFloat -- catch-all to floating: disabled!
   ]
     where role = stringProperty "WM_WINDOW_ROLE"
+
+-- add a tag to a window via ManageHook
 addTagHook :: String -> ManageHook
 addTagHook tag = do
   w <- ask
@@ -129,16 +133,35 @@ notQ query = do
   b <- query
   pure $ not b
 
+-- query that checks if the provided query ends with the given sequence.
+endsWith :: Eq a => Query [a] -> [a] -> Query Bool
+endsWith q x = fmap (isSuffixOf x) q
+
+-- the currently focused window is passed in as second parameter, to be used
+-- in conjunction with 'withFocused'
+-- up next: is w the window we need, i.e. does it work for the query?
+-- trying to execute a query for 'appName' on the thing
+
+-- runQuery :: Query a -> Window -> X a
+localThing :: String -> Window -> X ()
+localThing name w = do
+  an <- runQuery appName w
+  ws <- gets (W.currentTag . windowset)
+  let localName = ws ++ "_" ++ name
+  if an == localName
+  then windows $ W.shift "NSP"
+  else ifWindow (appName =? localName) (doShift ws) (spawn $ tmux localName)
+
 localScratchpad :: (String -> ManageHook -> NamedScratchpad) -> String -> ManageHook -> WorkspaceId -> NamedScratchpad
 localScratchpad nsF session hook ws = nsF session' hook
   where session' = session ++ '_' : ws
 
 tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
-tmuxScratchpad session = NS session command (resource =? session)
+tmuxScratchpad session = NS session command (appName =? session)
   where command = tmux session
 
 shellScratchpad :: String -> ManageHook -> NamedScratchpad
-shellScratchpad session = NS session command (resource =? session)
+shellScratchpad session = NS session command (appName =? session)
   where command = "urxvt -name " ++ session ++ " -e " ++ session
 
 tmux :: String -> String
@@ -157,7 +180,7 @@ upperLeftRect  = W.RationalRect 0.0 0.0 0.5 0.5
 tags :: [Tag]
 tags = [ 'b' -- project-related documentation (auto-assigned to vimb)
        , 'e' -- editor / emacs (auto-assigned to emacs instances)
-       , 'o' -- org mode: project-related org or similar (not auto-assigned)
+         -- , 'o' -- org mode: project-related org or similar (not auto-assigned)
        , 'v' -- vim instance
        , 'x' -- assign freely, 'extended' 
        ]
@@ -306,9 +329,9 @@ myMainKeys =
   , ( (myAltMask, xK_x), withFocused $ sendMessage . UnMerge)
   , ( (myAltMask .|. shiftMask, xK_x), withFocused $ sendMessage . UnMergeAll)
 
-  -- , ( (myModMask, xK_i), replicateM_ 3 $ withFocused $ sendKeyEvent 0 xK_z)
-  -- , ( (myShiftMask, xK_j), sendMessage $ IncMasterN (-1))
-  -- , ( (myShiftMask, xK_k), sendMessage $ IncMasterN 1)
+  -- overlay terminal: one per workspace. Very similar to named scratchpads,
+  -- but doesn't have to be registered at startup.
+  , ( (myModMask, xK_o),   withFocused $ localThing "overlay")
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
@@ -387,7 +410,7 @@ runOrRaiseLocal :: String -> X ()
 runOrRaiseLocal name = do
   workspace <- gets (W.currentTag . windowset)
   let localName = workspace ++ "_" ++ name
-  raiseMaybe (spawn $ tmux localName) (resource =? localName)
+  raiseMaybe (spawn $ tmux localName) (appName =? localName)
 
 connectToNetwork :: X ()
 connectToNetwork = do
