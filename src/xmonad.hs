@@ -88,7 +88,7 @@ myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
   <+> composeAll
   [ title =? "xmessage"    --> doRectFloat centeredRect
-  , appName `endsWith` "_overlay" --> doRectFloat centeredRect
+  , appName `endsWith` "_overlay" --> doRectFloat rightBarRect
   , className =? "Vimb"    --> addTagHook "b"
   , className =? "Emacs"   --> addTagHook "e"
   , className =? "Gvim"    --> addTagHook "v"
@@ -114,7 +114,7 @@ scratchpads =
     , emacsScratchpad "scratch" "/tmp/scratch"            ( customFloating centeredRect )
     , NS "chromium" "chromium" (className =? "Chromium")  ( customFloating leftBarRect )
     , NS "pidgin_contacts" "pidgin" isPidginContactList   ( customFloating contactBarRect )
-    , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating centeredRect )
+    , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating lowerRightRect )
     ]
 
 emacsScratchpad :: String -> String -> ManageHook -> NamedScratchpad
@@ -162,14 +162,21 @@ shellScratchpad session = NS session command (appName =? session)
 tmux :: String -> String
 tmux session = myTerminal ++ " -name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
 
+x          = 1920 :: Rational
+y          = 1080 :: Rational
+
+gapSize    = 10 :: Rational
+fullWidth  = ( x - 2*gapSize ) / x
+fullHeight = ( y - 2*gapSize ) / y
+left = gapSize / x
+up   = gapSize / y
+
 centeredRect   = W.RationalRect 0.2 0.2 0.6 0.6
-upperBarRect   = W.RationalRect 0.0 0.0 1.0 0.4
-rightBarRect   = W.RationalRect 0.5 0.0 0.5 1.0
-leftBarRect    = W.RationalRect 0.0 0.0 0.5 1.0
-contactBarRect = W.RationalRect 0.9 0.0 0.1 1.0
-upperRightRect = W.RationalRect 0.5 0.0 0.5 0.5
-lowerRightRect = W.RationalRect 0.5 0.5 0.5 0.5
-upperLeftRect  = W.RationalRect 0.0 0.0 0.5 0.5
+upperBarRect   = W.RationalRect left up fullWidth (1 / 3)
+rightBarRect   = W.RationalRect (1/2) up (fullWidth / 2) fullHeight
+leftBarRect    = W.RationalRect left up (fullWidth / 2) fullHeight
+contactBarRect = W.RationalRect 0.9 up 0.1 fullHeight
+lowerRightRect = W.RationalRect (1/2) (1/2) (fullWidth / 2) (fullHeight / 2)
 
 -- explicit list of tags
 tags :: [Tag]
