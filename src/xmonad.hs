@@ -48,6 +48,7 @@ import XMonad.Actions.UpdatePointer (updatePointer)
 import XMonad.Actions.WindowGo (ifWindow, raiseMaybe, raiseHook)
 
 import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.SetWMName
 
 import XMonad.Layout.Accordion
 import XMonad.Layout.BoringWindows
@@ -137,12 +138,6 @@ notQ query = do
 endsWith :: Eq a => Query [a] -> [a] -> Query Bool
 endsWith q x = fmap (isSuffixOf x) q
 
--- the currently focused window is passed in as second parameter, to be used
--- in conjunction with 'withFocused'
--- up next: is w the window we need, i.e. does it work for the query?
--- trying to execute a query for 'appName' on the thing
-
--- runQuery :: Query a -> Window -> X a
 localThing :: String -> Window -> X ()
 localThing name w = do
   an <- runQuery appName w
@@ -212,6 +207,7 @@ main = xmonad $ dynamicProjects projects defaultConfig
   , terminal           = myTerminal
   , workspaces         = myWorkspaces
   , layoutHook         = myLayoutHook
+  , startupHook        = setWMName "LG3D"
   , manageHook         = myManageHook
   , logHook            = updatePointer (0.5, 0.5) (0, 0)
   , keys               = myKeys
