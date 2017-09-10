@@ -43,7 +43,7 @@ import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig, gridselect, gri
 import XMonad.Actions.Promote (promote)
 import XMonad.Actions.SinkAll (sinkAll)
 import XMonad.Actions.Submap (submap)
-import XMonad.Actions.TagWindows (addTag, delTag, focusDownTagged, focusUpTagged, hasTag)
+import XMonad.Actions.TagWindows (addTag, delTag, focusUpTagged, focusDownTagged, hasTag, withTagged)
 import XMonad.Actions.UpdatePointer (updatePointer)
 import XMonad.Actions.WindowGo (ifWindow, raiseMaybe, raiseHook)
 
@@ -60,15 +60,15 @@ import XMonad.Layout.NoBorders (noBorders)
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.SimplestFloat (simplestFloat)
 import XMonad.Layout.Simplest
-import XMonad.Layout.Spacing (spacingWithEdge, smartSpacingWithEdge, spacing)
+import XMonad.Layout.Spacing (spacing, spacingWithEdge, smartSpacing, smartSpacingWithEdge)
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.TabBarDecoration
 import XMonad.Layout.Tabbed
-import XMonad.Layout.TrackFloating (useTransientFor, trackFloating)
 import XMonad.Layout.WindowNavigation
 
 import XMonad.Util.NamedScratchpad
 
+import Debug.TrackFloating (useTransientFor, trackFloating)
 import MyWorkspaces
 
 type Tag = Char
@@ -153,7 +153,15 @@ localThing name w = do
   let localName = ws ++ "_" ++ name
   if an == localName
   then windows $ W.shift "NSP"
-  else ifWindow (appName =? localName) (doShift ws) (spawn $ tmux localName)
+  else ifWindow (appName =? localName) (doShiftAndFocus ws) (spawn $ tmux localName)
+
+-- | Move the window to a given workspace
+-- doShift' :: WorkspaceId -> ManageHook
+-- doShift' i = doF . W.shiftWin i =<< ask
+doShiftAndFocus :: WorkspaceId -> ManageHook
+doShiftAndFocus i = do
+  w <- ask
+  (doF . W.shiftWin i) w
 
 localScratchpad :: (String -> ManageHook -> NamedScratchpad) -> String -> ManageHook -> WorkspaceId -> NamedScratchpad
 localScratchpad nsF session hook ws = nsF session' hook
@@ -237,7 +245,9 @@ myLayoutHook = noBorders
                . useTransientFor
                . addTopBar
                . addTabs shrinkText myTabTheme
-               . spacingWithEdge 5
+               -- . spacingWithEdge 5
+               -- . spacing 5
+               . smartSpacing 5
                . mkToggle (FULL ?? MIRROR ?? EOT)
                $ tabs ||| subs
   where
@@ -308,14 +318,15 @@ myMainKeys =
   , ( (myModMask, xK_r), toggleWS' ["NSP", "eclipse"])
   , ( (myModMask, xK_s), nextScreen)
   , ( (myModMask, xK_m), namedScratchpadAction scratchpads "_mail")
-  , ( (myModMask, xK_c), namedScratchpadAction scratchpads "chromium")
+  , ( (myModMask, xK_c), namedScratchpadAction scratchpads "firefox")
+  , ( (myShiftMask, xK_c), namedScratchpadAction scratchpads "chromium")
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
   , ( (myModMask, xK_g), namedScratchpadAction scratchpads "gtd")
   , ( (myModMask, xK_backslash), namedScratchpadAction scratchpads "scratch")
   , ( (myModMask, xK_f), sendMessage $ Toggle FULL)
   , ( (myModMask, xK_slash), sendMessage $ Toggle MIRROR)
   , ( (myModMask, xK_b), runOrRaiseLocal "build")
-  , ( (myModMask, xK_t), runOrRaiseLocal "test")
+  , ( (myModMask, xK_t), runOrRaiseLocal "term")
 
   -- SubLayout: iterate inside a single group
   , ( (myModMask, xK_period), onGroup W.focusDown')
@@ -344,7 +355,7 @@ myMainKeys =
   , ( (myAltMask .|. shiftMask, xK_x), withFocused $ sendMessage . UnMergeAll)
 
   -- overlay terminal: one per workspace. Very similar to named scratchpads,
-  -- but doesn't have to be registered at startup.
+    -- but doesn't have to be registered at startup.
   , ( (myModMask, xK_o),   withFocused $ localThing "overlay")
   ]
 
@@ -432,9 +443,6 @@ connectToNetwork = do
   case maybeCon of
     Just con -> spawn $ "sudo netctl switch-to " ++ con
     Nothing  -> pure ()
-
-xmessage :: String -> X ()
-xmessage msg = spawn $ "xmessage '" ++ msg ++ "' -default okay"
 
 -- | Send a key to the window
 sendKeyEvent :: ButtonMask -> KeySym -> Window -> X ()
