@@ -181,7 +181,7 @@ tmux session = myTerminal ++ " -name "  ++ session ++ " -e zsh -i -c \"tas " ++ 
 x          = 1920 :: Rational
 y          = 1080 :: Rational
 
-gapSize    = 10 :: Rational
+gapSize    = 5 :: Rational
 fullWidth  = ( x - 2*gapSize ) / x
 fullHeight = ( y - 2*gapSize ) / y
 left = gapSize / x
