@@ -26,7 +26,7 @@ import Debug.Trace
 import Control.Monad (replicateM_)
 import qualified Data.Map as M
 import Data.Monoid (Endo(..))
-import Data.List (isSuffixOf)
+import Data.List (isPrefixOf, isSuffixOf)
 
 import XMonad
 import XMonad.ManageHook
@@ -92,6 +92,8 @@ myManageHook = namedScratchpadManageHook scratchpads
   , className =? "Vimb"    --> addTagHook "b"
   , className =? "Emacs"   --> addTagHook "e"
   , className =? "Gvim"    --> addTagHook "v"
+  , className =? "Apvlv"   --> addTagHook "d"
+  , className =? "vimb"    --> addTagHook "d"
   , className =? "jetbrains-idea-ce" --> addTagHook "i"
   , role =? "browser-edit" --> doRectFloat lowerRightRect
   -- , pure True            --> doFloat -- catch-all to floating: disabled!
@@ -113,7 +115,8 @@ scratchpads =
     , tmuxScratchpad "hud"                                ( customFloating upperBarRect )
     , emacsScratchpad "gtd" "/home/pi/gtd/master.org"     ( customFloating centeredRect )
     , emacsScratchpad "scratch" "/tmp/scratch"            ( customFloating centeredRect )
-    , NS "chromium" "chromium" (className =? "Chromium")  ( customFloating leftBarRect )
+    , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
+    , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "pidgin_contacts" "pidgin" isPidginContactList   ( customFloating contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating lowerRightRect )
     ]
@@ -137,7 +140,11 @@ notQ query = do
 
 -- query that checks if the provided query ends with the given sequence.
 endsWith :: Eq a => Query [a] -> [a] -> Query Bool
-endsWith q x = fmap (isSuffixOf x) q
+endsWith q x = isSuffixOf x <$> q
+
+-- query that checks if the provided query starts with the given sequence.
+startsWith :: Eq a => Query [a] -> [a] -> Query Bool
+startsWith q x = isPrefixOf x <$> q
 
 localThing :: String -> Window -> X ()
 localThing name w = do
@@ -184,6 +191,7 @@ tags :: [Tag]
 tags = [ 'b' -- project-related documentation (auto-assigned to vimb)
        , 'e' -- editor / emacs (auto-assigned to emacs instances)
          -- , 'o' -- org mode: project-related org or similar (not auto-assigned)
+       , 'd' -- documentation of any kind
        , 'v' -- vim instance
        , 'x' -- assign freely, 'extended'
        , 'i' -- idea
@@ -269,6 +277,7 @@ promptSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
 promptSubmap = M.fromList
   [ ( (0, xK_b), spawn $ "/home/pi/bin/browser-dmenu " ++ myBrowser)
   , ( (0, xK_c), spawn "/home/pi/bin/browser-dmenu chromium")
+  , ( (0, xK_f), spawn "/home/pi/bin/browser-dmenu firefox")
   , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
   , ( (0, xK_g), goToSelected defaultGSConfig) -- %! Push window back into tiling
