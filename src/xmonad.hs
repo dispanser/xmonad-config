@@ -78,6 +78,7 @@ myWorkspaces = []
 
 myTerminal, myBrowser, myEditor :: String
 myBrowser  = "vimb"
+myQute     = "qutebrowser --backend webengine"
 myEditor   = "emacsclient -c"
 myTerminal = "urxvt"
 
@@ -90,6 +91,8 @@ myManageHook = namedScratchpadManageHook scratchpads
   [ title =? "xmessage"    --> doRectFloat centeredRect
   , appName `endsWith` "_overlay" --> doRectFloat rightBarRect
   , className =? "Vimb"    --> addTagHook "b"
+  , className =? "Firefox"    --> addTagHook "b"
+  , className =? "qutebrowser"    --> addTagHook "b"
   , className =? "Emacs"   --> addTagHook "e"
   , className =? "Gvim"    --> addTagHook "v"
   , className =? "Apvlv"   --> addTagHook "d"
@@ -117,6 +120,7 @@ scratchpads =
     , emacsScratchpad "scratch" "/tmp/scratch"            ( customFloating centeredRect )
     , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
+    , NS "qutebrowser" myQute (className =? "qutebrowser") ( customFloating leftBarRect )
     , NS "pidgin_contacts" "pidgin" isPidginContactList   ( customFloating contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating lowerRightRect )
     ]
@@ -288,6 +292,7 @@ promptSubmap = M.fromList
   [ ( (0, xK_b), spawn $ "/home/pi/bin/browser-dmenu " ++ myBrowser)
   , ( (0, xK_c), spawn "/home/pi/bin/browser-dmenu chromium")
   , ( (0, xK_f), spawn "/home/pi/bin/browser-dmenu firefox")
+  , ( (0, xK_q), spawn "/home/pi/bin/browser-dmenu qutebrowser")
   , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
   , ( (0, xK_g), goToSelected defaultGSConfig) -- %! Push window back into tiling
@@ -318,7 +323,8 @@ myMainKeys =
   , ( (myModMask, xK_r), toggleWS' ["NSP", "eclipse"])
   , ( (myModMask, xK_s), nextScreen)
   , ( (myModMask, xK_m), namedScratchpadAction scratchpads "_mail")
-  , ( (myModMask, xK_c), namedScratchpadAction scratchpads "firefox")
+  , ( (myModMask, xK_c), namedScratchpadAction scratchpads "qutebrowser")
+  , ( (myAltMask, xK_c), namedScratchpadAction scratchpads "firefox")
   , ( (myShiftMask, xK_c), namedScratchpadAction scratchpads "chromium")
   , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
   , ( (myModMask, xK_g), namedScratchpadAction scratchpads "gtd")
