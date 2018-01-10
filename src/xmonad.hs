@@ -471,7 +471,7 @@ myTabTheme = def
     , inactiveBorderColor   = base02
     , activeTextColor       = base03
     , inactiveTextColor     = base00
-    , decoHeight            = 12
+    , decoHeight            = tabHeight
     }
 
 topBarTheme = def
@@ -488,8 +488,10 @@ topBarTheme = def
     }
 
 topbar      = 5
+tabHeight   = 14
 
-myFont      = "-*-terminus-medium-*-*-*-*-190-*-*-*-*-*-*"
+myFont      = "-*-terminus-medium-*-*-*-*-180-*-*-*-*-*-*"
+-- myFont      = "xft:Iosevka:pixelsize=12"
 
 active      = blue
 
