@@ -422,7 +422,7 @@ myKeys conf = M.fromList $
 
 tagControl :: [( ButtonMask, String -> X () )]
 tagControl = [ ( myModMask,     \t -> focusUpTagged   t)
-             , ( myShiftMask,   \t -> focusDownTagged t)
+             -- , ( myShiftMask,   \t -> focusDownTagged t)
              , ( tagToggleMask, withFocused . toggleTag )
              ]
 
