@@ -295,9 +295,9 @@ promptSubmap = M.fromList
   , ( (0, xK_q), spawn "/home/pi/bin/browser-dmenu qutebrowser")
   , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
-  , ( (0, xK_g), goToSelected defaultGSConfig) -- %! Push window back into tiling
-  , ( (0, xK_w), connectToNetwork) -- %! Push window back into tiling
-  , ( (0, xK_p), gridselectWorkspace defaultGSConfig W.greedyView) -- %! Push window back into tiling
+  , ( (0, xK_g), goToSelected defaultGSConfig)
+  , ( (0, xK_w), connectToNetwork)
+  , ( (0, xK_p), gridselectWorkspace defaultGSConfig W.greedyView)
   ]
 
 -- submaps for less common window operations
