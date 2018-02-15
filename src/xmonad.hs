@@ -88,16 +88,17 @@ myConnections = zip connectionNames connectionNames
 myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
   <+> composeAll
-  [ title =? "xmessage"    --> doRectFloat centeredRect
-  , appName `endsWith` "_overlay" --> doRectFloat rightBarRect
-  , className =? "Vimb"    --> addTagHook "b"
-  , className =? "Firefox"    --> addTagHook "b"
-  , className =? "qutebrowser"    --> addTagHook "b"
-  , className =? "Emacs"   --> addTagHook "e"
-  , className =? "Gvim"    --> addTagHook "v"
-  , className =? "Apvlv"   --> addTagHook "d"
-  , className =? "vimb"    --> addTagHook "d"
+  [ title =? "xmessage"              --> doRectFloat centeredRect
+  , appName `endsWith` "_overlay"    --> doRectFloat rightBarRect
+  , className =? "Pinentry"          --> doRectFloat smallCentered
+  , className =? "Vimb"              --> addTagHook "b"
+  , className =? "Firefox"           --> addTagHook "b"
+  , className =? "qutebrowser"       --> addTagHook "b"
+  , className =? "Emacs"             --> addTagHook "e"
+  , className =? "Gvim"              --> addTagHook "v"
+  , className =? "Apvlv"             --> addTagHook "d"
   , className =? "jetbrains-idea-ce" --> addTagHook "i"
+  , className =? "URxvt"             --> addTagHook "u"
   , role =? "browser-edit" --> doRectFloat lowerRightRect
   -- , pure True            --> doFloat -- catch-all to floating: disabled!
   ]
@@ -192,6 +193,7 @@ left = gapSize / x
 up   = gapSize / y
 
 centeredRect   = W.RationalRect 0.2 0.2 0.6 0.6
+smallCentered  = W.RationalRect 0.35 0.4 0.3 0.2
 upperBarRect   = W.RationalRect left up fullWidth (1 / 3)
 rightBarRect   = W.RationalRect (1/2) up (fullWidth / 2) fullHeight
 leftBarRect    = W.RationalRect left up (fullWidth / 2) fullHeight
