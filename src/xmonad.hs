@@ -99,7 +99,8 @@ myManageHook = namedScratchpadManageHook scratchpads
   , className =? "Apvlv"             --> addTagHook "d"
   , className =? "jetbrains-idea-ce" --> addTagHook "i"
   , className =? "URxvt"             --> addTagHook "u"
-  , role =? "browser-edit" --> doRectFloat lowerRightRect
+  , role      =? "browser-edit"      --> doRectFloat lowerRightRect
+  , appName   =? "browser-edit"      --> doRectFloat lowerRightRect
   -- , pure True            --> doFloat -- catch-all to floating: disabled!
   ]
     where role = stringProperty "WM_WINDOW_ROLE"
