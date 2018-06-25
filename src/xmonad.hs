@@ -1,28 +1,5 @@
 import Debug.Trace
 
--- current workings
--- - Sublayouts w/ ResizableTall as outer layout
--- - inner layout: Simplest (need to get tabs working, but subTabs doesn't cut it)
--- - mnemonics: the key bindings for floating have been remapped to wasd
--- - windownavigation via mod-[hjkl]
--- - window merging via shiftMod-[hjkl] (pull into group)
--- - shrink / expand via altMod-[hl] (master) [jk] (slave)
--- - navigate inside tabs via mod-[np]
--- - swap Up / down via shiftMod-[np] (inconsistent with tab-navigation)
--- - spacing between windows (5px, also on edges)
-
--- TODO: short term
--- - change tag behavior: we don't want to pull the window into master
--- - add tag behavior: use shift to pull the window into master
--- - workspace-aware chromium sessions: per-session tabs remembered
-
--- - workspace-ware emacs sessions
--- TODO: long term
--- - automatically group some windows, e.g. all vimbs into a group
-
-
--- keybinding overview:
--- modMask: alt-gr (mod5Mask)
 import Control.Monad (replicateM_)
 import qualified Data.Map as M
 import Data.Monoid (Endo(..))
@@ -39,13 +16,13 @@ import XMonad.Actions.DynamicProjects (dynamicProjects, shiftToProjectPrompt, sw
 import XMonad.Actions.FloatKeys (keysResizeWindow)
 import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
 import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig, gridselect, gridselectWorkspace)
--- import XMonad.Actions.Navigation2D (windowGo)
 import XMonad.Actions.Promote (promote)
 import XMonad.Actions.SinkAll (sinkAll)
 import XMonad.Actions.Submap (submap)
 import XMonad.Actions.TagWindows (addTag, delTag, focusUpTagged, focusDownTagged, hasTag, withTagged)
 import XMonad.Actions.UpdatePointer (updatePointer)
-import XMonad.Actions.WindowGo (ifWindow, raiseMaybe, raiseHook)
+import XMonad.Actions.WindowGo (ifWindow, raiseMaybe)
+import XMonad.Actions.WindowBringer(bringWindow)
 
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.SetWMName
@@ -118,10 +95,12 @@ scratchpads =
     , shellScratchpad "journalctl -xf"                    ( customFloating centeredRect )
     , tmuxScratchpad "_mail"                              ( customFloating centeredRect )
     , tmuxScratchpad "hud"                                ( customFloating upperBarRect )
+    , tmuxScratchpad "config"                             ( customFloating leftBarRect )
     , emacsScratchpad "gtd" "/home/pi/gtd/master.org"     ( customFloating centeredRect )
-    , emacsScratchpad "scratch" "/tmp/scratch"            ( customFloating centeredRect )
+    , emacsScratchpad "scratch" "/tmp/scratch.org"        ( customFloating centeredRect )
     , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
+    , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
     , NS "qutebrowser" myQute (className =? "qutebrowser") ( customFloating leftBarRect )
     , NS "pidgin_contacts" "pidgin" isPidginContactList   ( customFloating contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating lowerRightRect )
@@ -152,26 +131,23 @@ endsWith q x = isSuffixOf x <$> q
 startsWith :: Eq a => Query [a] -> [a] -> Query Bool
 startsWith q x = isPrefixOf x <$> q
 
-localThing :: String -> Window -> X ()
-localThing name w = do
-  an <- runQuery appName w
-  ws <- gets (W.currentTag . windowset)
-  let localName = ws ++ "_" ++ name
-  if an == localName
-  then windows $ W.shift "NSP"
-  else ifWindow (appName =? localName) (doShiftAndFocus ws) (spawn $ tmux localName)
+localThing :: String -> X ()
+localThing name = withWindowSet $ \ws -> do
+  let tag       =  W.currentTag ws
+  let focused   =  W.peek ws
+  let localName =  tag ++ "_" ++ name
+  case focused of
+    Just w -> do
+	  an <- runQuery appName w
+	  if an == localName
+	  then windows $ W.shift "NSP"
+	  else ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn $ tmux localName)
+    Nothing -> spawn $ tmux localName
 
--- | Move the window to a given workspace
--- doShift' :: WorkspaceId -> ManageHook
--- doShift' i = doF . W.shiftWin i =<< ask
 doShiftAndFocus :: WorkspaceId -> ManageHook
 doShiftAndFocus i = do
   w <- ask
-  (doF . W.shiftWin i) w
-
-localScratchpad :: (String -> ManageHook -> NamedScratchpad) -> String -> ManageHook -> WorkspaceId -> NamedScratchpad
-localScratchpad nsF session hook ws = nsF session' hook
-  where session' = session ++ '_' : ws
+  doF $ (W.focusWindow w . W.shiftWin i w)
 
 tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
 tmuxScratchpad session = NS session command (appName =? session)
@@ -210,6 +186,7 @@ tags = [ 'b' -- project-related documentation (auto-assigned to vimb)
        , 'v' -- vim instance
        , 'x' -- assign freely, 'extended'
        , 'i' -- idea
+	   , 'u' -- urxvt
        ]
 
 -- simple thing that checks all potential sources for keybindings for our main mask:
@@ -233,18 +210,20 @@ tagToggleMask       = myModMask .|. mod4Mask
 workspaceMask       = myModMask
 
 main :: IO ()
-main = xmonad $ dynamicProjects projects defaultConfig
-  { borderWidth        = 1
-  , modMask            = myModMask
-  , terminal           = myTerminal
-  , workspaces         = myWorkspaces
-  , layoutHook         = myLayoutHook
-  , startupHook        = setWMName "LG3D"
-  , manageHook         = myManageHook
-  , logHook            = updatePointer (0.5, 0.5) (0, 0)
-  , keys               = myKeys
-  , normalBorderColor  = "#cccccc"
-  , focusedBorderColor = "#cd8b00" }
+main = do
+  ps <- projects
+  xmonad $ dynamicProjects ps defaultConfig
+    { borderWidth        = 1
+    , modMask            = myModMask
+    , terminal           = myTerminal
+    , workspaces         = myWorkspaces
+    , layoutHook         = myLayoutHook
+    , startupHook        = setWMName "LG3D"
+    , manageHook         = myManageHook
+    , logHook            = updatePointer (0.5, 0.5) (0, 0)
+    , keys               = myKeys
+    , normalBorderColor  = "#cccccc"
+    , focusedBorderColor = "#cd8b00" }
 
 myLayoutHook = noBorders
                . windowNavigation
@@ -252,8 +231,6 @@ myLayoutHook = noBorders
                . useTransientFor
                . addTopBar
                . addTabs shrinkText myTabTheme
-               -- . spacingWithEdge 5
-               -- . spacing 5
                . smartSpacing 5
                . mkToggle (FULL ?? MIRROR ?? EOT)
                $ tabs ||| subs
@@ -281,7 +258,6 @@ appSubmap = M.fromList
   , ( (0, xK_b), spawn myBrowser)
   , ( (0, xK_e), spawn myEditor)
   , ( (0, xK_v), spawn "gvim")
-  , ( (0, xK_p), spawn "pidgin")
   , ( (0, xK_h), namedScratchpadAction scratchpads "htop")
   -- TODO: logging scratchpad doesn't work very well, probably because
   -- the command takes parameters, so the name of the window doeesn't
@@ -320,52 +296,52 @@ mySubmap = submap
 
 myMainKeys :: [(( ButtonMask, KeySym ), X () )]
 myMainKeys =
-  [ ( (myModMask, xK_a), mySubmap appSubmap)
-  , ( (myModMask, xK_z), mySubmap promptSubmap)
-  , ( (myModMask, xK_w), mySubmap windowSubmap)
-  , ( (myModMask, xK_r), toggleWS' ["NSP", "eclipse"])
-  , ( (myModMask, xK_s), nextScreen)
-  , ( (myModMask, xK_m), namedScratchpadAction scratchpads "_mail")
-  , ( (myModMask, xK_c), namedScratchpadAction scratchpads "qutebrowser")
-  , ( (myAltMask, xK_c), namedScratchpadAction scratchpads "firefox")
-  , ( (myShiftMask, xK_c), namedScratchpadAction scratchpads "chromium")
-  , ( (myModMask, xK_q), namedScratchpadAction scratchpads "hud")
-  , ( (myModMask, xK_g), namedScratchpadAction scratchpads "gtd")
-  , ( (myModMask, xK_backslash), namedScratchpadAction scratchpads "scratch")
-  , ( (myModMask, xK_f), sendMessage $ Toggle FULL)
-  , ( (myModMask, xK_slash), sendMessage $ Toggle MIRROR)
-  , ( (myModMask, xK_b), runOrRaiseLocal "build")
-  , ( (myModMask, xK_t), runOrRaiseLocal "term")
+  [ ( (myModMask,               xK_a),         mySubmap appSubmap)
+  , ( (myModMask,               xK_z),         mySubmap promptSubmap)
+  , ( (myModMask,               xK_w),         mySubmap windowSubmap)
+  , ( (myModMask,               xK_r),         toggleWS' ["NSP", "eclipse"])
+  , ( (myModMask,               xK_s),         nextScreen)
+  , ( (myModMask,               xK_m),         namedScratchpadAction scratchpads "_mail")
+  , ( (myModMask,               xK_c),         namedScratchpadAction scratchpads "qutebrowser")
+  , ( (myAltMask,               xK_c),         namedScratchpadAction scratchpads "firefox")
+  , ( (myShiftMask,             xK_c),         namedScratchpadAction scratchpads "chromium")
+  , ( (myModMask,               xK_q),         namedScratchpadAction scratchpads "hud")
+  , ( (myModMask,               xK_g),         namedScratchpadAction scratchpads "gtd")
+  , ( (myShiftMask,             xK_q),         namedScratchpadAction scratchpads "config")
+  , ( (myModMask,               xK_backslash), namedScratchpadAction scratchpads "scratch")
+  , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
+  , ( (myModMask,               xK_slash),     sendMessage $ Toggle MIRROR)
+  , ( (myModMask,               xK_t),         runOrRaiseLocal "term")
 
   -- SubLayout: iterate inside a single group
-  , ( (myModMask, xK_period), onGroup W.focusDown')
-  , ( (myModMask, xK_comma), onGroup W.focusUp')
+  , ( (myModMask,               xK_period),    onGroup W.focusDown')
+  , ( (myModMask,               xK_comma),     onGroup W.focusUp')
 
   -- SubLayout: go / swap in the four directions
-  , ( (myModMask, xK_l),   sendMessage $ Go R)
-  , ( (myModMask, xK_h),   sendMessage $ Go L)
-  , ( (myModMask, xK_k),   sendMessage $ Go U)
-  , ( (myModMask, xK_j),   sendMessage $ Go D)
-  , ( (myShiftMask, xK_l), sendMessage $ Swap R)
-  , ( (myShiftMask, xK_h), sendMessage $ Swap L)
-  , ( (myShiftMask, xK_k), sendMessage $ Swap U)
-  , ( (myShiftMask, xK_j), sendMessage $ Swap D)
-  , ( (myControlMask, xK_h), sendMessage Shrink)
-  , ( (myControlMask, xK_l), sendMessage Expand)
-  , ( (myControlMask, xK_j), sendMessage MirrorShrink)
-  , ( (myControlMask, xK_k), sendMessage MirrorExpand)
+  , ( (myModMask,               xK_l),         sendMessage $ Go R)
+  , ( (myModMask,               xK_h),         sendMessage $ Go L)
+  , ( (myModMask,               xK_k),         sendMessage $ Go U)
+  , ( (myModMask,               xK_j),         sendMessage $ Go D)
+  , ( (myShiftMask,             xK_l),         sendMessage $ Swap R)
+  , ( (myShiftMask,             xK_h),         sendMessage $ Swap L)
+  , ( (myShiftMask,             xK_k),         sendMessage $ Swap U)
+  , ( (myShiftMask,             xK_j),         sendMessage $ Swap D)
+  , ( (myControlMask,           xK_h),         sendMessage Shrink)
+  , ( (myControlMask,           xK_l),         sendMessage Expand)
+  , ( (myControlMask,           xK_j),         sendMessage MirrorShrink)
+  , ( (myControlMask,           xK_k),         sendMessage MirrorExpand)
 
   -- SubLayout: merge windows, explode
-  , ( (myAltMask, xK_BackSpace), sendMessage $ pullGroup L)
-  , ( (myAltMask, xK_l), sendMessage $ pullGroup R)
-  , ( (myAltMask, xK_k), sendMessage $ pullGroup U)
-  , ( (myAltMask, xK_j), sendMessage $ pullGroup D)
-  , ( (myAltMask, xK_x), withFocused $ sendMessage . UnMerge)
-  , ( (myAltMask .|. shiftMask, xK_x), withFocused $ sendMessage . UnMergeAll)
+  , ( (myAltMask,               xK_BackSpace), sendMessage $ pullGroup L)
+  -- , ( (myAltMask, xK_l), sendMessage $ pullGroup R)
+  , ( (myAltMask,               xK_k),         sendMessage $ pullGroup U)
+  , ( (myAltMask,               xK_j),         sendMessage $ pullGroup D)
+  , ( (myAltMask,               xK_x),         withFocused $ sendMessage . UnMerge)
+  , ( (myAltMask .|. shiftMask, xK_x),         withFocused $ sendMessage . UnMergeAll)
 
   -- overlay terminal: one per workspace. Very similar to named scratchpads,
-    -- but doesn't have to be registered at startup.
-  , ( (myModMask, xK_o),   withFocused $ localThing "overlay")
+  -- but doesn't have to be registered at startup.
+  , ( (myModMask,               xK_o),         localThing "overlay")
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
@@ -382,14 +358,12 @@ myBaseKeys conf = myMainKeys ++
 
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
+  , ( (myAltMask,   xK_y), namedScratchpadAction scratchpads "franz")
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
   , ( (myModMask,   xK_space), switchProjectPrompt    defaultXPConfig)
   , ( (myShiftMask, xK_space), shiftToProjectPrompt   defaultXPConfig)
   , ( (myControlMask,xK_space), changeProjectDirPrompt defaultXPConfig)
-  , ( (myModMask,   xK_i), windows $ W.greedyView "eclipse")
-
-  -- , ( (myModMask,   xK_f), withFocused $ \f -> windows =<< appEndo `fmap` runQuery doFullFloat f)
 
   -- move floating windows: snap to next barrier. Last param is a Maybe Int
   -- threshold in pixels but I couldn't find any impact;
@@ -493,8 +467,7 @@ topBarTheme = def
 topbar      = 5
 tabHeight   = 14
 
-myFont      = "-*-terminus-medium-*-*-*-*-180-*-*-*-*-*-*"
--- myFont      = "xft:Iosevka:pixelsize=12"
+myFont      = "xft:Iosevka:pixelsize=12"
 
 active      = blue
 
