@@ -65,20 +65,21 @@ myConnections = zip connectionNames connectionNames
 myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
   <+> composeAll
-  [ title =? "xmessage"              --> doRectFloat centeredRect
-  , appName `endsWith` "_overlay"    --> doRectFloat rightBarRect
-  , appName `endsWith` "_scratch"    --> doRectFloat centeredRect
-  , className =? "Pinentry"          --> doRectFloat smallCentered
-  , className =? "Vimb"              --> addTagHook "b"
-  , className =? "Firefox"           --> addTagHook "b"
-  , className =? "qutebrowser"       --> addTagHook "b"
-  , className =? "Emacs"             --> addTagHook "e"
-  , className =? "Gvim"              --> addTagHook "v"
-  , className =? "Apvlv"             --> addTagHook "d"
-  , className =? "jetbrains-idea-ce" --> addTagHook "i"
-  , className =? "URxvt"             --> addTagHook "u"
-  , role      =? "browser-edit"      --> doRectFloat lowerRightRect
-  , appName   =? "browser-edit"      --> doRectFloat lowerRightRect
+  [ title     =?         "xmessage"          --> doRectFloat centeredRect
+  , appName   `endsWith` "_overlay"          --> doRectFloat rightBarRect
+  , appName   `endsWith` "_scratch"          --> doRectFloat centeredRect
+  , appName   `endsWith` "_org"              --> doRectFloat centeredRect
+  , className =?         "Pinentry"          --> doRectFloat smallCentered
+  , className =?         "Vimb"              --> addTagHook  "b"
+  , className =?         "Firefox"           --> addTagHook  "b"
+  , className =?         "qutebrowser"       --> addTagHook  "b"
+  , className =?         "Emacs"             --> addTagHook  "e"
+  , className =?         "Gvim"              --> addTagHook  "v"
+  , className =?         "Apvlv"             --> addTagHook  "d"
+  , className =?         "jetbrains-idea-ce" --> addTagHook  "i"
+  , className =?         "URxvt"             --> addTagHook  "u"
+  , role      =?         "browser-edit"      --> doRectFloat lowerRightRect
+  , appName   =?         "browser-edit"      --> doRectFloat lowerRightRect
   ]
     where role = stringProperty "WM_WINDOW_ROLE"
 
@@ -96,7 +97,6 @@ scratchpads =
     , tmuxScratchpad "_mail"                              ( customFloating centeredRect )
     , tmuxScratchpad "hud"                                ( customFloating upperBarRect )
     , tmuxScratchpad "config"                             ( customFloating leftBarRect )
-    , emacsScratchpad "gtd" "/home/pi/gtd/master.org"     ( customFloating centeredRect )
     , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
@@ -319,8 +319,8 @@ myMainKeys =
   , ( (myAltMask,               xK_c),         namedScratchpadAction scratchpads "firefox")
   , ( (myShiftMask,             xK_c),         namedScratchpadAction scratchpads "chromium")
   , ( (myModMask,               xK_q),         namedScratchpadAction scratchpads "hud")
-  , ( (myModMask,               xK_g),         namedScratchpadAction scratchpads "gtd")
   , ( (myShiftMask,             xK_q),         namedScratchpadAction scratchpads "config")
+  , ( (myModMask,               xK_g),         localEmacsClient "master.org"  "org")
   , ( (myModMask,               xK_backslash), localEmacsClient "scratch.org" "scratch")
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
   , ( (myModMask,               xK_slash),     sendMessage $ Toggle MIRROR)
