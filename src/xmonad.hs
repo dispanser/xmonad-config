@@ -132,17 +132,24 @@ startsWith :: Eq a => Query [a] -> [a] -> Query Bool
 startsWith q x = isPrefixOf x <$> q
 
 localTmux :: String -> X ()
-localTmux name = withWindowSet $ \ws -> do
+localTmux = localScratch tmux
+
+-- | create a scratchpad given a function that expects the tag name as a @String
+--   and produces the command to be executed, and the local window type that is
+--   a part of the globally valid local tag name
+localScratch :: (String -> String) -> String -> X ()
+localScratch cmdF name = withWindowSet $ \ws -> do
   let tag       =  W.currentTag ws
   let focused   =  W.peek ws
   let localName =  tag ++ "_" ++ name
+  let command   = cmdF localName
   case focused of
     Just w -> do
-	  an <- runQuery appName w
-	  if an == localName
-	    then windows $ W.shift "NSP"
-	    else ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn $ tmux localName)
-    Nothing -> spawn $ tmux localName
+      an <- runQuery appName w
+      if an == localName
+        then windows $ W.shift "NSP"
+        else ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn command)
+    Nothing -> spawn command
 
 doShiftAndFocus :: WorkspaceId -> ManageHook
 doShiftAndFocus i = do
