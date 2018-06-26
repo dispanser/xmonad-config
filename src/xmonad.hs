@@ -113,14 +113,12 @@ emacsScratchpad name file = NS name command query
 
 isPidginContactList, isPidginMessageWindow, isPidginClass, isBuddy :: Query Bool
 isPidginContactList   = isPidginClass <&&> isBuddy
-isPidginMessageWindow = isPidginClass <&&> notQ ( isBuddy )
+isPidginMessageWindow = isPidginClass <&&> notQ isBuddy
 isPidginClass = className =? "Pidgin"
 isBuddy = title =? "Buddy List"
 
 notQ :: Query Bool -> Query Bool
-notQ query = do
-  b <- query
-  pure $ not b
+notQ query = not <$> query
 
 -- query that checks if the provided query ends with the given sequence.
 endsWith :: Eq a => Query [a] -> [a] -> Query Bool
@@ -411,10 +409,8 @@ myKeys conf = M.fromList $
   ++ buildTagKeys tags
 
 tagControl :: [( ButtonMask, String -> X () )]
-tagControl = [ ( myModMask,     \t -> focusUpTagged   t)
-             -- , ( myShiftMask,   \t -> focusDownTagged t)
-             , ( tagToggleMask, withFocused . toggleTag )
-             ]
+tagControl = [ ( myModMask,     focusUpTagged )
+             , ( tagToggleMask, withFocused . toggleTag ) ]
 
 buildTagKeys :: [Tag] -> [(( ButtonMask, KeySym ), X () )]
 buildTagKeys tagKeys =
