@@ -1,21 +1,30 @@
-module MyWorkspaces (projects) where
+module MyWorkspaces (projects, projectFile) where
 
 import XMonad
-import XMonad.Actions.DynamicProjects (Project (..))
+import XMonad.Actions.DynamicProjects (Project (..), projectDirectory, currentProject)
 
-projects :: [Project]
+import Control.Monad (filterM)
+import Data.Semigroup ((<>))
+import System.Directory (listDirectory, getHomeDirectory, doesDirectoryExist)
+import System.FilePath.Posix (makeRelative, (</>))
 
-projects =
-  [ Project { projectName      = "system"
-            , projectDirectory = "~/configs"
-            , projectStartHook = Nothing
-            }
+projectRoot :: IO FilePath
+projectRoot = (</> "wip") <$> getHomeDirectory
 
-  , Project { projectName      = "xmonad-config"
-            , projectDirectory = "~/src/configs/xmonad"
-            , projectStartHook = Just $ do spawn "emacs xmonad-config/src/xmonad.hs"
-                                           spawn "emacs master.org"
-            }
-  ]
+wip :: IO [Project]
+wip = do
+  pr          <- projectRoot
+  entries     <- filter (/= "done") <$> listDirectory pr
+  dirs        <- filterM (doesDirectoryExist . (pr </>)) entries
+  return $ map (projectForDir pr) dirs
 
+-- | resolve a file relative to the current project directory
+projectFile :: FilePath -> X FilePath
+projectFile f = ( </> f) . projectDirectory <$> currentProject
+
+projectForDir :: FilePath -> FilePath -> Project
+projectForDir pr d = Project
+  { projectName      = d
+  , projectDirectory = pr </> d
+  , projectStartHook = Nothing }
 
