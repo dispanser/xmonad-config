@@ -12,7 +12,7 @@ import qualified XMonad.StackSet as W
 
 import XMonad.Actions.CycleWS (nextScreen, shiftNextScreen, toggleWS')
 import XMonad.Actions.DynamicWorkspaces (withNthWorkspace)
-import XMonad.Actions.DynamicProjects (dynamicProjects, shiftToProjectPrompt, switchProjectPrompt, changeProjectDirPrompt)
+import XMonad.Actions.DynamicProjects (dynamicProjects, switchProjectPrompt, shiftToProjectPrompt, changeProjectDirPrompt)
 import XMonad.Actions.FloatKeys (keysResizeWindow)
 import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
 import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig, gridselect, gridselectWorkspace)
@@ -67,6 +67,7 @@ myManageHook = namedScratchpadManageHook scratchpads
   <+> composeAll
   [ title =? "xmessage"              --> doRectFloat centeredRect
   , appName `endsWith` "_overlay"    --> doRectFloat rightBarRect
+  , appName `endsWith` "_scratch"    --> doRectFloat centeredRect
   , className =? "Pinentry"          --> doRectFloat smallCentered
   , className =? "Vimb"              --> addTagHook "b"
   , className =? "Firefox"           --> addTagHook "b"
@@ -78,7 +79,6 @@ myManageHook = namedScratchpadManageHook scratchpads
   , className =? "URxvt"             --> addTagHook "u"
   , role      =? "browser-edit"      --> doRectFloat lowerRightRect
   , appName   =? "browser-edit"      --> doRectFloat lowerRightRect
-  -- , pure True            --> doFloat -- catch-all to floating: disabled!
   ]
     where role = stringProperty "WM_WINDOW_ROLE"
 
@@ -97,7 +97,6 @@ scratchpads =
     , tmuxScratchpad "hud"                                ( customFloating upperBarRect )
     , tmuxScratchpad "config"                             ( customFloating leftBarRect )
     , emacsScratchpad "gtd" "/home/pi/gtd/master.org"     ( customFloating centeredRect )
-    , emacsScratchpad "scratch" "/tmp/scratch.org"        ( customFloating centeredRect )
     , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
@@ -134,6 +133,13 @@ startsWith q x = isPrefixOf x <$> q
 localTmux :: String -> X ()
 localTmux = localScratch tmux
 
+localEmacsClient :: FilePath -> String -> X ()
+localEmacsClient file name = do
+  file' <- projectFile file
+  return ()
+  let ecF localName = "emacsclient -c -F '((name . \"" ++ localName ++ "\"))' -s test -a '' " ++ file'
+  localScratch ecF name
+
 -- | create a scratchpad given a function that expects the tag name as a @String
 --   and produces the command to be executed, and the local window type that is
 --   a part of the globally valid local tag name
@@ -154,7 +160,7 @@ localScratch cmdF name = withWindowSet $ \ws -> do
 doShiftAndFocus :: WorkspaceId -> ManageHook
 doShiftAndFocus i = do
   w <- ask
-  doF $ (W.focusWindow w . W.shiftWin i w)
+  doF $ W.focusWindow w . W.shiftWin i w
 
 tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
 tmuxScratchpad session = NS session command (appName =? session)
@@ -315,7 +321,7 @@ myMainKeys =
   , ( (myModMask,               xK_q),         namedScratchpadAction scratchpads "hud")
   , ( (myModMask,               xK_g),         namedScratchpadAction scratchpads "gtd")
   , ( (myShiftMask,             xK_q),         namedScratchpadAction scratchpads "config")
-  , ( (myModMask,               xK_backslash), namedScratchpadAction scratchpads "scratch")
+  , ( (myModMask,               xK_backslash), localEmacsClient "scratch.org" "scratch")
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
   , ( (myModMask,               xK_slash),     sendMessage $ Toggle MIRROR)
   , ( (myModMask,               xK_t),         runOrRaiseLocal "term")
@@ -358,19 +364,19 @@ myBaseKeys conf = myMainKeys ++
 
   -- basic window switch via mod-{n,p}. Mix in shift to not bring front
   , ( (myShiftMask, xK_Return), promote)
-  , ( (myShiftMask, xK_n),   windows W.swapDown)
-  , ( (myShiftMask, xK_p),   windows W.swapUp)
-  , ( (myModMask,   xK_n),   windows W.focusDown)
-  , ( (myModMask,   xK_p),   windows W.focusUp)
+  , ( (myShiftMask, xK_n),      windows W.swapDown)
+  , ( (myShiftMask, xK_p),      windows W.swapUp)
+  , ( (myModMask,   xK_n),      windows W.focusDown)
+  , ( (myModMask,   xK_p),      windows W.focusUp)
 
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
   , ( (myAltMask,   xK_y), namedScratchpadAction scratchpads "franz")
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
-  , ( (myModMask,   xK_space), switchProjectPrompt    defaultXPConfig)
-  , ( (myShiftMask, xK_space), shiftToProjectPrompt   defaultXPConfig)
-  , ( (myControlMask,xK_space), changeProjectDirPrompt defaultXPConfig)
+  , ( (myModMask,     xK_space), switchProjectPrompt    defaultXPConfig)
+  , ( (myShiftMask,   xK_space), shiftToProjectPrompt   defaultXPConfig)
+  , ( (myControlMask, xK_space), changeProjectDirPrompt defaultXPConfig)
 
   -- move floating windows: snap to next barrier. Last param is a Maybe Int
   -- threshold in pixels but I couldn't find any impact;
