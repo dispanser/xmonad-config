@@ -131,8 +131,8 @@ endsWith q x = isSuffixOf x <$> q
 startsWith :: Eq a => Query [a] -> [a] -> Query Bool
 startsWith q x = isPrefixOf x <$> q
 
-localThing :: String -> X ()
-localThing name = withWindowSet $ \ws -> do
+localTmux :: String -> X ()
+localTmux name = withWindowSet $ \ws -> do
   let tag       =  W.currentTag ws
   let focused   =  W.peek ws
   let localName =  tag ++ "_" ++ name
@@ -140,8 +140,8 @@ localThing name = withWindowSet $ \ws -> do
     Just w -> do
 	  an <- runQuery appName w
 	  if an == localName
-	  then windows $ W.shift "NSP"
-	  else ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn $ tmux localName)
+	    then windows $ W.shift "NSP"
+	    else ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn $ tmux localName)
     Nothing -> spawn $ tmux localName
 
 doShiftAndFocus :: WorkspaceId -> ManageHook
@@ -341,7 +341,7 @@ myMainKeys =
 
   -- overlay terminal: one per workspace. Very similar to named scratchpads,
   -- but doesn't have to be registered at startup.
-  , ( (myModMask,               xK_o),         localThing "overlay")
+  , ( (myModMask,               xK_o),         localTmux "overlay")
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
