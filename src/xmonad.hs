@@ -11,7 +11,6 @@ import XMonad.Prompt (defaultXPConfig)
 import qualified XMonad.StackSet as W
 
 import XMonad.Actions.CycleWS (nextScreen, shiftNextScreen, toggleWS')
-import XMonad.Actions.DynamicWorkspaces (withNthWorkspace)
 import XMonad.Actions.DynamicProjects (dynamicProjects, switchProjectPrompt, shiftToProjectPrompt, changeProjectDirPrompt)
 import XMonad.Actions.FloatKeys (keysResizeWindow)
 import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
@@ -131,11 +130,11 @@ startsWith q x = isPrefixOf x <$> q
 localTmux :: String -> X ()
 localTmux = localScratch tmux
 
-localEmacsClient :: FilePath -> String -> X ()
-localEmacsClient file name = do
+localEmacsClient :: FilePath -> String -> String -> X ()
+localEmacsClient file name server = do
   file' <- projectFile file
   return ()
-  let ecF localName = "emacsclient -c -F '((name . \"" ++ localName ++ "\"))' -s test -a '' " ++ file'
+  let ecF localName = "emacsclient -c -F '((name . \"" ++ localName ++ "\"))' -s " ++ server ++ " -a '' " ++ file'
   localScratch ecF name
 
 -- | create a scratchpad given a function that expects the tag name as a @String
@@ -318,8 +317,8 @@ myMainKeys =
   , ( (myShiftMask,             xK_c),         namedScratchpadAction scratchpads "chromium")
   , ( (myModMask,               xK_q),         namedScratchpadAction scratchpads "hud")
   , ( (myShiftMask,             xK_q),         namedScratchpadAction scratchpads "config")
-  , ( (myModMask,               xK_g),         localEmacsClient "master.org"  "org")
-  , ( (myModMask,               xK_backslash), localEmacsClient "scratch.org" "scratch")
+  , ( (myModMask,               xK_g),         localEmacsClient "master.org"  "org" "org-mode")
+  , ( (myModMask,               xK_backslash), localEmacsClient "scratch.org" "scratch" "org-mode")
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
   , ( (myModMask,               xK_slash),     sendMessage $ Toggle MIRROR)
   , ( (myModMask,               xK_t),         runOrRaiseLocal "term")
@@ -400,12 +399,6 @@ myBaseKeys conf = myMainKeys ++
 myKeys :: XConfig Layout -> M.Map ( ButtonMask, KeySym ) ( X () )
 myKeys conf = M.fromList $
   myBaseKeys conf
-  -- [ ( myModMask, xK_0 ), withNthWorkspace . W.greedyView]
-  -- TODO: withNthWorkspace
-  -- [((m .|. workspaceMask, k), windows $ f i)
-  --   | (i, k) <- zip [0 ..] [xK_1 .. xK_9]
-  --   , (f, m) <- [(withNthWorkspace W.greedyView, 0),
-  --                (withNthWorkspace W.shift, shiftMask)]]
   ++ buildTagKeys tags
 
 tagControl :: [( ButtonMask, String -> X () )]
