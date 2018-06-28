@@ -45,7 +45,8 @@ import XMonad.Layout.WindowNavigation
 import XMonad.Util.NamedScratchpad
 
 import Debug.TrackFloating (useTransientFor, trackFloating)
-import MyWorkspaces
+import MyWorkspaces ( getMainWorkspace, projectFile, projects
+                    , toggleSideWorkspace)
 
 type Tag = Char
 
@@ -144,7 +145,7 @@ localScratch :: (String -> String) -> String -> X ()
 localScratch cmdF name = withWindowSet $ \ws -> do
   let tag       =  W.currentTag ws
   let focused   =  W.peek ws
-  let localName =  tag ++ "_" ++ name
+  let localName =  getMainWorkspace tag ++ "_" ++ name
   let command   = cmdF localName
   case focused of
     Just w -> do
@@ -196,7 +197,7 @@ tags = [ 'b' -- project-related documentation (auto-assigned to vimb)
        , 'v' -- vim instance
        , 'x' -- assign freely, 'extended'
        , 'i' -- idea
-	   , 'u' -- urxvt
+	     , 'u' -- urxvt
        ]
 
 -- simple thing that checks all potential sources for keybindings for our main mask:
@@ -371,6 +372,7 @@ myBaseKeys conf = myMainKeys ++
   , ( (myAltMask,   xK_y), namedScratchpadAction scratchpads "franz")
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
+  , ( (myModMask,     xK_BackSpace), toggleSideWorkspace)
   , ( (myModMask,     xK_space), switchProjectPrompt    defaultXPConfig)
   , ( (myShiftMask,   xK_space), shiftToProjectPrompt   defaultXPConfig)
   , ( (myControlMask, xK_space), changeProjectDirPrompt defaultXPConfig)
@@ -398,8 +400,7 @@ myBaseKeys conf = myMainKeys ++
 
 myKeys :: XConfig Layout -> M.Map ( ButtonMask, KeySym ) ( X () )
 myKeys conf = M.fromList $
-  myBaseKeys conf
-  ++ buildTagKeys tags
+  myBaseKeys conf ++ buildTagKeys tags
 
 tagControl :: [( ButtonMask, String -> X () )]
 tagControl = [ ( myModMask,     focusUpTagged )
