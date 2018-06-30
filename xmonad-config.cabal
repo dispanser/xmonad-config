@@ -17,8 +17,12 @@ library
   hs-source-dirs:      src
   default-language:    Haskell2010
   exposed-modules:     XMonad.Actions.BorderSnap
+                     , MyWorkspaces
+                     , Debug.TrackFloating
   build-depends:       base >= 4.7 && < 5
                      , containers
+                     , directory
+                     , filepath
                      , xmonad>=0.13   && < 0.14
                      , xmonad-contrib>=0.13   && < 0.14
 
@@ -29,6 +33,7 @@ executable xmonad-config
                      , containers
                      , xmonad>=0.13   && < 0.14
                      , xmonad-contrib>=0.13   && < 0.14
+                     , xmonad-config
 
 test-suite properties
   type: exitcode-stdio-1.0
