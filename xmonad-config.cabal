@@ -19,6 +19,7 @@ library
   exposed-modules:     XMonad.Actions.BorderSnap
                      , MyWorkspaces
                      , Debug.TrackFloating
+  other-modules:       Debug.Debug
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , directory
