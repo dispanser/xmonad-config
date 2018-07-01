@@ -12,7 +12,7 @@ flags: {}
 
 extra-package-dbs: []
 
-allow-newer: true
+# allow-newer: true
 nix:
     enable: true
     # pure: false
