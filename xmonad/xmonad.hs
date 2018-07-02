@@ -26,11 +26,11 @@ import XMonad.Actions.TagWindows (addTag, delTag, focusUpTagged, hasTag)
 import XMonad.Actions.UpdatePointer (updatePointer)
 import XMonad.Actions.WindowGo (ifWindow, raiseMaybe)
 
-import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.ManageHelpers (doRectFloat)
 import XMonad.Hooks.SetWMName (setWMName)
 
 import XMonad.Layout.Accordion ( Accordion (..) )
-import XMonad.Layout.BoringWindows
+import XMonad.Layout.BoringWindows (boringWindows)
 import XMonad.Layout.Decoration
 import XMonad.Layout.MultiToggle
 import XMonad.Layout.MultiToggle.Instances
@@ -196,19 +196,12 @@ lowerRightRect = W.RationalRect (1/2) (1/2) (fullWidth / 2) (fullHeight / 2)
 tags :: [Tag]
 tags = [ 'b' -- project-related documentation (auto-assigned to vimb)
        , 'e' -- editor / emacs (auto-assigned to emacs instances)
-         -- , 'o' -- org mode: project-related org or similar (not auto-assigned)
        , 'd' -- documentation of any kind
        , 'v' -- vim instance
        , 'x' -- assign freely, 'extended'
        , 'i' -- idea
-	     , 'u' -- urxvt
+       , 'u' -- urxvt
        ]
-
--- simple thing that checks all potential sources for keybindings for our main mask:
--- tags, copyBindings, globalTags, named scratchpads, mainBindings
--- reports any key that is used multiple times
-validateBindings :: Bool
-validateBindings = True
 
 keyToCode :: M.Map Char KeySym
 keyToCode = M.fromList $ zip (['a' .. 'z'] ++ ['0' .. '9']) ([xK_a .. xK_z] ++ [xK_0 .. xK_9])
@@ -287,7 +280,8 @@ promptSubmap = M.fromList
   , ( (0, xK_c), spawn "/home/pi/bin/browser-dmenu chromium")
   , ( (0, xK_f), spawn "/home/pi/bin/browser-dmenu firefox")
   , ( (0, xK_q), spawn "/home/pi/bin/browser-dmenu qutebrowser")
-  , ( (0, xK_s), passPrompt defaultXPConfig)
+  -- , ( (0, xK_s), passPrompt defaultXPConfig)
+  , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
   , ( (0, xK_g), goToSelected defaultGSConfig)
   , ( (0, xK_w), connectToNetwork)
