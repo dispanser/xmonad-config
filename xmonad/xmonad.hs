@@ -169,8 +169,9 @@ tmuxScratchpad session = NS session command (appName =? session)
   where command = tmux session
 
 shellScratchpad :: String -> ManageHook -> NamedScratchpad
-shellScratchpad session = NS session command (appName =? session)
-  where command = "urxvt -name " ++ session ++ " -e " ++ session
+shellScratchpad session = NS session command (appName =? name)
+  where command = "urxvt -name " ++ name ++ " -e " ++ session
+        name    = filter (/= ' ') session
 
 tmux :: String -> String
 tmux session = myTerminal ++ " -name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
