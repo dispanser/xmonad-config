@@ -63,15 +63,17 @@ import           Debug.TrackFloating                 (trackFloating,
 import           MyWorkspaces                        (getMainWorkspace,
                                                       projectFile, projects,
                                                       toggleSideWorkspace)
+import           PiMonad.Scratches                   (doShiftAndFocus,
+                                                      projectBrowser)
 
 type Tag = Char
 
 myWorkspaces :: [WorkspaceId]
 myWorkspaces = []
 
-myTerminal, myBrowser, myEditor :: String
+myTerminal, myBrowser, myEditor, myQute :: String
 myBrowser  = "vimb"
-myQute     = "qutebrowser --backend webengine"
+myQute     = "qutebrowser --backend webengine --qt-arg name global_qute"
 myEditor   = "emacsclient -c"
 myTerminal = "urxvt"
 
@@ -113,7 +115,7 @@ scratchpads =
     , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
-    , NS "qutebrowser" myQute (className =? "qutebrowser") ( customFloating leftBarRect )
+    , NS "qutebrowser" myQute (appName =? "global_qute") ( customFloating leftBarRect )
     , NS "pidgin_contacts" "pidgin" isPidginContactList   ( customFloating contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating lowerRightRect )
     ]
@@ -167,12 +169,6 @@ localScratch cmdF name = withWindowSet $ \ws -> do
         then windows $ W.shift "NSP"
         else ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn command)
     Nothing -> ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn command)
-
-
-doShiftAndFocus :: WorkspaceId -> ManageHook
-doShiftAndFocus i = do
-  w <- ask
-  doF $ W.focusWindow w . W.shiftWin i w
 
 tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
 tmuxScratchpad session = NS session command (appName =? session)
@@ -363,6 +359,7 @@ myMainKeys =
   -- overlay terminal: one per workspace. Very similar to named scratchpads,
   -- but doesn't have to be registered at startup.
   , ( (myModMask,               xK_o),         localTmux "overlay")
+  , ( (myModMask,               xK_semicolon), projectBrowser)
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
