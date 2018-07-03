@@ -1,56 +1,68 @@
-import Debug.Trace
+import           Debug.Trace
 
 -- experimental
-import XMonad.Prompt.Pass ( passPrompt, passGeneratePrompt )
+import           XMonad.Prompt.Pass                  (passGeneratePrompt,
+                                                      passPrompt)
 
 -- regular
-import Control.Monad (replicateM_)
-import qualified Data.Map as M
-import Data.Monoid (Endo(..))
-import Data.List (isPrefixOf, isSuffixOf)
+import           Data.List                           (isPrefixOf, isSuffixOf)
+import qualified Data.Map                            as M
 
-import XMonad
-import XMonad.ManageHook
-import XMonad.Prompt (defaultXPConfig)
-import qualified XMonad.StackSet as W
+import           XMonad
+import           XMonad.Prompt                       (defaultXPConfig)
+import qualified XMonad.StackSet                     as W
 
-import XMonad.Actions.CycleWS (nextScreen, shiftNextScreen, toggleWS')
-import XMonad.Actions.DynamicProjects (dynamicProjects, switchProjectPrompt, shiftToProjectPrompt, changeProjectDirPrompt)
-import XMonad.Actions.FloatKeys (keysResizeWindow)
-import XMonad.Actions.FloatSnap (Direction2D ( .. ), snapShrink, snapGrow, snapMove)
-import XMonad.Actions.GridSelect (goToSelected, defaultGSConfig, gridselect, gridselectWorkspace)
-import XMonad.Actions.Promote (promote)
-import XMonad.Actions.SinkAll (sinkAll)
-import XMonad.Actions.Submap (submap)
-import XMonad.Actions.TagWindows (addTag, delTag, focusUpTagged, hasTag)
-import XMonad.Actions.UpdatePointer (updatePointer)
-import XMonad.Actions.WindowGo (ifWindow, raiseMaybe)
+import           XMonad.Actions.CycleWS              (nextScreen,
+                                                      shiftNextScreen,
+                                                      toggleWS')
+import           XMonad.Actions.DynamicProjects      (changeProjectDirPrompt,
+                                                      dynamicProjects,
+                                                      shiftToProjectPrompt,
+                                                      switchProjectPrompt)
+import           XMonad.Actions.FloatKeys            (keysResizeWindow)
+import           XMonad.Actions.FloatSnap            (Direction2D (..),
+                                                      snapGrow, snapMove,
+                                                      snapShrink)
+import           XMonad.Actions.GridSelect           (defaultGSConfig,
+                                                      goToSelected, gridselect,
+                                                      gridselectWorkspace)
+import           XMonad.Actions.Promote              (promote)
+import           XMonad.Actions.SinkAll              (sinkAll)
+import           XMonad.Actions.Submap               (submap)
+import           XMonad.Actions.TagWindows           (addTag, delTag,
+                                                      focusUpTagged, hasTag)
+import           XMonad.Actions.UpdatePointer        (updatePointer)
+import           XMonad.Actions.WindowGo             (ifWindow, raiseMaybe)
 
-import XMonad.Hooks.ManageHelpers (doRectFloat)
-import XMonad.Hooks.SetWMName (setWMName)
+import           XMonad.Hooks.ManageHelpers          (doRectFloat)
+import           XMonad.Hooks.SetWMName              (setWMName)
 
-import XMonad.Layout.Accordion ( Accordion (..) )
-import XMonad.Layout.BoringWindows (boringWindows)
-import XMonad.Layout.Decoration
-import XMonad.Layout.MultiToggle
-import XMonad.Layout.MultiToggle.Instances
-import XMonad.Layout.NoFrillsDecoration
-import XMonad.Layout.NoBorders (noBorders)
-import XMonad.Layout.ResizableTile
-import XMonad.Layout.SimplestFloat (simplestFloat)
-import XMonad.Layout.Simplest
-import XMonad.Layout.Spacing (smartSpacing)
-import XMonad.Layout.SubLayouts ( subLayout, toSubl, onGroup, pullGroup,
-    GroupMsg (..) )
-import XMonad.Layout.TabBarDecoration
-import XMonad.Layout.Tabbed
-import XMonad.Layout.WindowNavigation
+import           XMonad.Layout.Accordion             (Accordion (..))
+import           XMonad.Layout.BoringWindows         (boringWindows)
+import           XMonad.Layout.Decoration
+import           XMonad.Layout.MultiToggle
+import           XMonad.Layout.MultiToggle.Instances
+import           XMonad.Layout.NoBorders             (noBorders)
+import           XMonad.Layout.NoFrillsDecoration
+import           XMonad.Layout.ResizableTile
+import           XMonad.Layout.Simplest
+import           XMonad.Layout.Spacing               (smartSpacing)
+import           XMonad.Layout.SubLayouts            (GroupMsg (..), onGroup,
+                                                      pullGroup, subLayout,
+                                                      toSubl)
+import           XMonad.Layout.Tabbed
+import           XMonad.Layout.WindowNavigation
 
-import XMonad.Util.NamedScratchpad
+import           XMonad.Util.NamedScratchpad         (NamedScratchpad (..),
+                                                      customFloating,
+                                                      namedScratchpadAction,
+                                                      namedScratchpadManageHook)
 
-import Debug.TrackFloating (useTransientFor, trackFloating)
-import MyWorkspaces ( getMainWorkspace, projectFile, projects
-                    , toggleSideWorkspace)
+import           Debug.TrackFloating                 (trackFloating,
+                                                      useTransientFor)
+import           MyWorkspaces                        (getMainWorkspace,
+                                                      projectFile, projects,
+                                                      toggleSideWorkspace)
 
 type Tag = Char
 
@@ -62,9 +74,6 @@ myBrowser  = "vimb"
 myQute     = "qutebrowser --backend webengine"
 myEditor   = "emacsclient -c"
 myTerminal = "urxvt"
-
-connectionNames = [ "Saaleblick", "lambda", "sigma", "bahn", "tomtom-internal" ]
-myConnections = zip connectionNames connectionNames
 
 myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
@@ -177,15 +186,17 @@ shellScratchpad session = NS session command (appName =? name)
 tmux :: String -> String
 tmux session = myTerminal ++ " -name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
 
-x          = 1920 :: Rational
-y          = 1080 :: Rational
+x, y, gapSize, fullWidth, fullHeight, left, up :: Rational
+x          = 1920
+y          = 1080
 
-gapSize    = 5 :: Rational
+gapSize    = 5
 fullWidth  = ( x - 2*gapSize ) / x
 fullHeight = ( y - 2*gapSize ) / y
 left = gapSize / x
 up   = gapSize / y
 
+centeredRect, smallCentered, upperBarRect, rightBarRect, leftBarRect, contactBarRect, lowerRightRect :: W.RationalRect
 centeredRect   = W.RationalRect 0.2 0.2 0.6 0.6
 smallCentered  = W.RationalRect 0.35 0.4 0.3 0.2
 upperBarRect   = W.RationalRect left up fullWidth (1 / 3)
@@ -286,7 +297,6 @@ promptSubmap = M.fromList
   , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
   , ( (0, xK_g), goToSelected defaultGSConfig)
-  , ( (0, xK_w), connectToNetwork)
   , ( (0, xK_p), gridselectWorkspace defaultGSConfig W.greedyView)
   ]
 
@@ -422,13 +432,6 @@ runOrRaiseLocal name = do
   workspace <- gets (W.currentTag . windowset)
   let localName = workspace ++ "_" ++ name
   raiseMaybe (spawn $ tmux localName) (appName =? localName)
-
-connectToNetwork :: X ()
-connectToNetwork = do
-  maybeCon <- gridselect defaultGSConfig myConnections
-  case maybeCon of
-    Just con -> spawn $ "sudo netctl switch-to " ++ con
-    Nothing  -> pure ()
 
 -- | Send a key to the window
 sendKeyEvent :: ButtonMask -> KeySym -> Window -> X ()
