@@ -60,11 +60,10 @@ import           XMonad.Util.NamedScratchpad         (NamedScratchpad (..),
 
 import           Debug.TrackFloating                 (trackFloating,
                                                       useTransientFor)
-import           MyWorkspaces                        (getMainWorkspace,
+import           PiMonad.Scratches                   (doShiftAndFocus, projectBrowser)
+import           PiMonad.Workspaces                  (getMainWorkspace,
                                                       projectFile, projects,
                                                       toggleSideWorkspace)
-import           PiMonad.Scratches                   (doShiftAndFocus,
-                                                      projectBrowser)
 
 type Tag = Char
 

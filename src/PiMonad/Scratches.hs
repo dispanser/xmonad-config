@@ -5,7 +5,7 @@ module PiMonad.Scratches ( doShiftAndFocus
                          )
 where
 
-import           MyWorkspaces                   (getMainWorkspace)
+import           PiMonad.Workspaces             (getMainWorkspace)
 import           System.FilePath.Posix          ((</>))
 import           XMonad
 import           XMonad.Actions.DynamicProjects (Project (..), currentProject)

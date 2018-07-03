@@ -1,20 +1,22 @@
-module MyWorkspaces ( projects
-                    , projectFile
-                    , toggleSideWorkspace
-                    , getMainWorkspace )
+module PiMonad.Workspaces ( projects
+                          , projectFile
+                          , toggleSideWorkspace
+                          , getMainWorkspace )
 where
 
-import XMonad
-import qualified XMonad.StackSet as W
-import XMonad.Actions.DynamicProjects ( Project (..), projectDirectory
-                                      , currentProject)
-import XMonad.Actions.DynamicWorkspaces (addWorkspace)
+import           XMonad
+import           XMonad.Actions.DynamicProjects   (Project (..), currentProject,
+                                                   projectDirectory)
+import           XMonad.Actions.DynamicWorkspaces (addWorkspace)
+import qualified XMonad.StackSet                  as W
 
-import Control.Monad (filterM)
-import Data.List (isSuffixOf)
-import Data.Semigroup ((<>))
-import System.Directory (listDirectory, getHomeDirectory, doesDirectoryExist)
-import System.FilePath.Posix (makeRelative, (</>))
+import           Control.Monad                    (filterM)
+import           Data.List                        (isSuffixOf)
+import           Data.Semigroup                   ((<>))
+import           System.Directory                 (doesDirectoryExist,
+                                                   getHomeDirectory,
+                                                   listDirectory)
+import           System.FilePath.Posix            ((</>))
 
 projectRoot :: IO FilePath
 projectRoot = (</> "wip") <$> getHomeDirectory
