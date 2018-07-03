@@ -157,7 +157,8 @@ localScratch cmdF name = withWindowSet $ \ws -> do
       if an == localName
         then windows $ W.shift "NSP"
         else ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn command)
-    Nothing -> spawn command
+    Nothing -> ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn command)
+
 
 doShiftAndFocus :: WorkspaceId -> ManageHook
 doShiftAndFocus i = do
