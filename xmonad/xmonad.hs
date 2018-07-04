@@ -114,7 +114,7 @@ scratchpads =
     , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
-    , NS "qutebrowser" myQute (appName =? "global_qute") ( customFloating leftBarRect )
+    , NS "qutebrowser" myQute (appName =? "global_qute")  ( customFloating leftBarRect )
     , NS "pidgin_contacts" "pidgin" isPidginContactList   ( customFloating contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating lowerRightRect )
     ]
@@ -275,9 +275,6 @@ appSubmap = M.fromList
   , ( (0, xK_e), spawn myEditor)
   , ( (0, xK_v), spawn "gvim")
   , ( (0, xK_h), namedScratchpadAction scratchpads "htop")
-  -- TODO: logging scratchpad doesn't work very well, probably because
-  -- the command takes parameters, so the name of the window doeesn't
-  -- properly match the command line supplied arg
   , ( (0, xK_l), namedScratchpadAction scratchpads "journalctl -xf")
   ]
 

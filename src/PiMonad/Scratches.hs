@@ -20,9 +20,8 @@ doShiftAndFocus i = do
 projectBrowser :: X ()
 projectBrowser = projectScratch cmdF
   where
-    cmdF (Project {..} ) = ( "qutebrowser -r " ++ localName ++ " --qt-arg name "
-                             ++ localName ++ " --target window --basedir "
-                             ++ projectDir
+    cmdF (Project {..} ) = ( "qutebrowser --qt-arg name " ++ localName ++
+                             " --target window --basedir " ++ projectDir
                            , appName =? localName )
       where localName  = getMainWorkspace projectName ++ "_qute"
             projectDir = projectDirectory </> ".qute"
