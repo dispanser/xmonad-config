@@ -86,7 +86,8 @@ myManageHook = namedScratchpadManageHook scratchpads
   , className =?         "Pinentry"          --> doRectFloat smallCentered
   , className =?         "Vimb"              --> addTagHook  "b"
   , className =?         "Firefox"           --> addTagHook  "b"
-  , className =?         "qutebrowser"       --> addTagHook  "b"
+  , className `startsWith` "Chromium"        --> addTagHook  "b"
+  , className =?         "qutebrowser"       --> addTagHook  "b" >> doRectFloat leftBarRect
   , className =?         "Emacs"             --> addTagHook  "e"
   , className =?         "Gvim"              --> addTagHook  "v"
   , className =?         "Apvlv"             --> addTagHook  "d"
