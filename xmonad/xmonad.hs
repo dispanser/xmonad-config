@@ -17,6 +17,7 @@ import           XMonad.Actions.CycleWS              (nextScreen,
                                                       toggleWS')
 import           XMonad.Actions.DynamicProjects      (changeProjectDirPrompt,
                                                       dynamicProjects,
+                                                      shiftToProject,
                                                       shiftToProjectPrompt,
                                                       switchProjectPrompt)
 import           XMonad.Actions.FloatKeys            (keysResizeWindow)
@@ -62,6 +63,7 @@ import           Debug.TrackFloating                 (trackFloating,
                                                       useTransientFor)
 import           PiMonad.Scratches                   (doShiftAndFocus, projectBrowser)
 import           PiMonad.Workspaces                  (getMainWorkspace,
+                                                      shiftToOtherWorkspace,
                                                       projectFile, projects,
                                                       toggleSideWorkspace)
 
@@ -377,6 +379,8 @@ myBaseKeys conf = myMainKeys ++
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
   , ( (myModMask,     xK_BackSpace), toggleSideWorkspace)
+  , ( (myShiftMask,   xK_BackSpace), shiftToOtherWorkspace )
+
   , ( (myModMask,     xK_space), switchProjectPrompt    defaultXPConfig)
   , ( (myShiftMask,   xK_space), shiftToProjectPrompt   defaultXPConfig)
   , ( (myControlMask, xK_space), changeProjectDirPrompt defaultXPConfig)

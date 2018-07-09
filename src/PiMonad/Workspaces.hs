@@ -1,12 +1,13 @@
 module PiMonad.Workspaces ( projects
                           , projectFile
                           , toggleSideWorkspace
-                          , getMainWorkspace )
+                          , getMainWorkspace
+                          , shiftToOtherWorkspace )
 where
 
 import           XMonad
 import           XMonad.Actions.DynamicProjects   (Project (..), currentProject,
-                                                   projectDirectory)
+                                                   projectDirectory, shiftToProject)
 import           XMonad.Actions.DynamicWorkspaces (addWorkspace)
 import qualified XMonad.StackSet                  as W
 
@@ -58,3 +59,8 @@ toggleSideWorkspace :: X ()
 toggleSideWorkspace = do
   workspace <- gets (W.currentTag . windowset)
   addWorkspace $ getOtherWorkspace workspace
+
+shiftToOtherWorkspace :: X ()
+shiftToOtherWorkspace = do
+  workspace <- gets (W.currentTag . windowset)
+  windows $ W.shift (getOtherWorkspace workspace)
