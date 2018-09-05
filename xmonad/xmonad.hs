@@ -360,9 +360,12 @@ myMainKeys =
   -- but doesn't have to be registered at startup.
   , ( (myModMask,               xK_o),         localTmux "overlay")
   , ( (myModMask,               xK_semicolon), projectBrowser)
-  , ( (myModMask,               xK_0),         spawn "internal")
-  , ( (myModMask,               xK_1),         spawn "office")
-  , ( (myModMask,               xK_2),         spawn "desk_s")
+  , ( (myModMask,               xK_F1),         spawn "internal")
+  , ( (myModMask,               xK_F2),         spawn "office")
+  , ( (myModMask,               xK_F3),         spawn "desk_s")
+  , ( (myModMask,               xK_F12),        spawn "xmodmap /home/pi/.Xmodmap")
+  , ( (myModMask,               xK_F8),         spawn "/home/pi/bin/block_all.sh")
+  , ( (myModMask,               xK_F9),         spawn "/home/pi/bin/unblock_all.sh")
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
