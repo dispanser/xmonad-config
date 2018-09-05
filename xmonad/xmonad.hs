@@ -360,6 +360,9 @@ myMainKeys =
   -- but doesn't have to be registered at startup.
   , ( (myModMask,               xK_o),         localTmux "overlay")
   , ( (myModMask,               xK_semicolon), projectBrowser)
+  , ( (myModMask,               xK_0),         spawn "internal")
+  , ( (myModMask,               xK_1),         spawn "office")
+  , ( (myModMask,               xK_2),         spawn "desk_s")
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
