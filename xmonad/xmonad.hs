@@ -118,6 +118,7 @@ scratchpads =
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
     , NS "qutebrowser" myQute (appName =? "global_qute")  ( customFloating leftBarRect )
+    , NS "slack" "slack" (className =? "Slack")           ( customFloating lowerRightRect )
     , NS "pidgin_contacts" "pidgin" isPidginContactList   ( customFloating contactBarRect )
     , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating lowerRightRect )
     ]
@@ -376,6 +377,7 @@ myBaseKeys conf = myMainKeys ++
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
   , ( (myAltMask,   xK_y), namedScratchpadAction scratchpads "franz")
+  , ( (myControlMask, xK_y), namedScratchpadAction scratchpads "slack")
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
   , ( (myModMask,     xK_BackSpace), toggleSideWorkspace)
