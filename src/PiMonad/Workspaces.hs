@@ -2,6 +2,7 @@ module PiMonad.Workspaces ( projects
                           , projectFile
                           , toggleSideWorkspace
                           , getMainWorkspace
+                          , getOtherWorkspace
                           , shiftToOtherWorkspace )
 where
 

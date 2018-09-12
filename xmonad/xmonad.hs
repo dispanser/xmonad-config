@@ -63,6 +63,7 @@ import           Debug.TrackFloating                 (trackFloating,
                                                       useTransientFor)
 import           PiMonad.Scratches                   (doShiftAndFocus, projectBrowser)
 import           PiMonad.Workspaces                  (getMainWorkspace,
+                                                      getOtherWorkspace,
                                                       shiftToOtherWorkspace,
                                                       projectFile, projects,
                                                       toggleSideWorkspace)
@@ -311,12 +312,20 @@ mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
 -- mySubmap = resubmapDefaultWithKey $ (\k -> xmessage ("huhu, unexpected key: " ++ (show $ snd k) ) )
 mySubmap = submap
 
+-- | toggle to previous workspace, skipping the workspace that is the associated
+-- side (or main) workspace of the current workspace
+toggleWSSkipSide :: [String] -> X()
+toggleWSSkipSide ignores = do
+  workspace <- gets (W.currentTag . windowset)
+  let otherWS =  getOtherWorkspace workspace
+  toggleWS' $ otherWS:ignores
+
 myMainKeys :: [(( ButtonMask, KeySym ), X () )]
 myMainKeys =
   [ ( (myModMask,               xK_a),         mySubmap appSubmap)
   , ( (myModMask,               xK_z),         mySubmap promptSubmap)
   , ( (myModMask,               xK_w),         mySubmap windowSubmap)
-  , ( (myModMask,               xK_r),         toggleWS' ["NSP", "eclipse"])
+  , ( (myModMask,               xK_r),         toggleWSSkipSide ["NSP"])
   , ( (myModMask,               xK_s),         nextScreen)
   , ( (myModMask,               xK_m),         namedScratchpadAction scratchpads "_mail")
   , ( (myModMask,               xK_c),         namedScratchpadAction scratchpads "qutebrowser")
