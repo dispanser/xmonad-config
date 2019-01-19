@@ -24,7 +24,8 @@ import           XMonad.Actions.FloatKeys            (keysResizeWindow)
 import           XMonad.Actions.FloatSnap            (Direction2D (..),
                                                       snapGrow, snapMove,
                                                       snapShrink)
-import           XMonad.Actions.GridSelect           (defaultGSConfig,
+import           XMonad.Actions.GridSelect           (bringSelected,
+                                                      defaultGSConfig,
                                                       goToSelected, gridselect,
                                                       gridselectWorkspace)
 import           XMonad.Actions.Promote              (promote)
@@ -299,6 +300,7 @@ promptSubmap = M.fromList
   , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
   , ( (0, xK_g), goToSelected defaultGSConfig)
+  , ( (0, xK_b), bringSelected defaultGSConfig)
   , ( (0, xK_p), gridselectWorkspace defaultGSConfig W.greedyView)
   ]
 
