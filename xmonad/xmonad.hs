@@ -82,24 +82,29 @@ myTerminal = "urxvt"
 myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
   <+> composeAll
-  [ title     =?         "xmessage"          --> doRectFloat centeredRect
-  , appName   `endsWith` "_overlay"          --> doRectFloat rightBarRect
-  , appName   `endsWith` "_scratch"          --> doRectFloat centeredRect
-  , appName   `endsWith` "_org"              --> doRectFloat centeredRect
-  , className =?         "Pinentry"          --> doRectFloat smallCentered
-  , className =?         "Vimb"              --> addTagHook  "b"
-  , className =?         "Firefox"           --> addTagHook  "b"
-  , className `startsWith` "Chromium"        --> addTagHook  "b"
-  , className =?         "qutebrowser"       --> addTagHook  "b" >> doRectFloat leftBarRect
-  , className =?         "Emacs"             --> addTagHook  "e"
-  , className =?         "Gvim"              --> addTagHook  "v"
-  , className =?         "Apvlv"             --> addTagHook  "d"
-  , className =?         "jetbrains-idea-ce" --> addTagHook  "i"
-  , className =?         "URxvt"             --> addTagHook  "u"
-  , role      =?         "browser-edit"      --> doRectFloat lowerRightRect
-  , appName   =?         "browser-edit"      --> doRectFloat lowerRightRect
+  [ title     =?           "xmessage"             --> doRectFloat centeredRect
+  , appName   `endsWith`   "_overlay"             --> doRectFloat rightBarRect
+  , appName   `endsWith`   "_scratch"             --> doRectFloat centeredRect
+  , appName   `endsWith`   "_org"                 --> doRectFloat centeredRect
+  -- title: WM_NAME / _NET_WM_NAME
+  , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
+  , className  =?          "Pinentry"             --> doRectFloat smallCentered
+  -- , appName   =?        "Slack Call Minipanel" --> doRectFloat (W.RationalRect (9/10) (9/10) (fullWidth / 10) (fullHeight / 10))
+  , className =?           "Vimb"                 --> addTagHook  "b"
+  , className =?           "Firefox"              --> addTagHook  "b"
+  , className `startsWith` "Chromium"             --> addTagHook  "b"
+  , className =?           "qutebrowser"          --> addTagHook  "b"             >>     doRectFloat leftBarRect
+  , className =?           "Emacs"                --> addTagHook  "e"
+  , className =?           "Gvim"                 --> addTagHook  "v"
+  , className =?           "Apvlv"                --> addTagHook  "d"
+  , className =?           "jetbrains-idea-ce"    --> addTagHook  "i"
+  , className =?           "URxvt"                --> addTagHook  "u"
+  , role      =?           "browser-edit"         --> doRectFloat lowerRightRect
+  , appName   =?           "browser-edit"         --> doRectFloat lowerRightRect
   ]
-    where role = stringProperty "WM_WINDOW_ROLE"
+
+role :: Query String
+role = stringProperty "WM_WINDOW_ROLE"
 
 -- add a tag to a window via ManageHook
 addTagHook :: String -> ManageHook
@@ -119,9 +124,10 @@ scratchpads =
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
     , NS "qutebrowser" myQute (appName =? "global_qute")  ( customFloating leftBarRect )
-    , NS "slack" "slack" (className =? "Slack")           ( customFloating lowerRightRect )
-    , NS "pidgin_contacts" "pidgin" isPidginContactList   ( customFloating contactBarRect )
-    , NS "pidgin_messages" "pidgin" isPidginMessageWindow ( customFloating lowerRightRect )
+    , NS "slack" "slack-dontstart" (title =? "Slack - TomTom" <&&> role =? "browser-window") ( customFloating lowerRightRect )
+    , NS "signal" "signal-desktop" (title =? "Signal")  ( customFloating lowerRightRect )
+    -- , NS "pidgin_contacts" "pidgin-dontstart" isPidginContactList   ( customFloating contactBarRect )
+    -- , NS "pidgin_messages" "pidgin-dontstart" isPidginMessageWindow ( customFloating lowerRightRect )
     ]
 
 emacsScratchpad :: String -> String -> ManageHook -> NamedScratchpad
@@ -153,7 +159,6 @@ localTmux = localScratch tmux
 localEmacsClient :: FilePath -> String -> String -> X ()
 localEmacsClient file name server = do
   file' <- projectFile file
-  return ()
   let ecF localName = "emacsclient -c -F '((name . \"" ++ localName ++ "\"))' -s " ++ server ++ " -a '' " ++ file'
   localScratch ecF name
 
@@ -390,7 +395,7 @@ myBaseKeys conf = myMainKeys ++
   , ( (myModMask,   xK_p),      windows W.focusUp)
 
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
-  , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin_contacts")
+  , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "signal")
   , ( (myAltMask,   xK_y), namedScratchpadAction scratchpads "franz")
   , ( (myControlMask, xK_y), namedScratchpadAction scratchpads "slack")
 
