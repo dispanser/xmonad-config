@@ -26,7 +26,7 @@ projectRoot = (</> "wip") <$> getHomeDirectory
 projects :: IO [Project]
 projects = do
   pr      <- projectRoot
-  entries <- filter (/= ".done") <$> listDirectory pr
+  entries <- filter (not . (`elem` [".done", ".todo", ".hold"])) <$> listDirectory pr
   dirs    <- filterM (doesDirectoryExist . (pr </>)) entries
   return $ concatMap (projectsForDir pr) dirs
 
