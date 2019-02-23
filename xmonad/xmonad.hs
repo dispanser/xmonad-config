@@ -62,11 +62,12 @@ import           XMonad.Util.NamedScratchpad         (NamedScratchpad (..),
 
 import           Debug.TrackFloating                 (trackFloating,
                                                       useTransientFor)
-import           PiMonad.Scratches                   (doShiftAndFocus, projectBrowser)
+import           PiMonad.Scratches                   (doShiftAndFocus,
+                                                      projectBrowser)
 import           PiMonad.Workspaces                  (getMainWorkspace,
                                                       getOtherWorkspace,
-                                                      shiftToOtherWorkspace,
                                                       projectFile, projects,
+                                                      shiftToOtherWorkspace,
                                                       toggleSideWorkspace)
 
 type Tag = Char
@@ -98,6 +99,7 @@ myManageHook = namedScratchpadManageHook scratchpads
   , className =?           "Emacs"                --> addTagHook  "e"
   , className =?           "Gvim"                 --> addTagHook  "v"
   , className =?           "Apvlv"                --> addTagHook  "d"
+  , className =?           ".zathura-wrapped_"    --> addTagHook  "d"
   , className =?           "jetbrains-idea-ce"    --> addTagHook  "i"
   , className =?           "URxvt"                --> addTagHook  "u"
   , role      =?           "browser-edit"         --> doRectFloat lowerRightRect
@@ -127,6 +129,7 @@ scratchpads =
     , NS "qutebrowser" myQute (appName =? "global_qute")  ( customFloating leftBarRect )
     , NS "slack" "slack-dontstart" (title =? "Slack - TomTom" <&&> role =? "browser-window") ( customFloating lowerRightRect )
     , NS "signal" "signal-desktop" (title =? "Signal")  ( customFloating lowerRightRect )
+    , NS "anki" "anki" (className =? "Anki")            ( customFloating centeredRect )
     -- , NS "pidgin_contacts" "pidgin-dontstart" isPidginContactList   ( customFloating contactBarRect )
     -- , NS "pidgin_messages" "pidgin-dontstart" isPidginMessageWindow ( customFloating lowerRightRect )
     ]
@@ -396,7 +399,7 @@ myBaseKeys conf = myMainKeys ++
   , ( (myModMask,   xK_n),      windows W.focusDown)
   , ( (myModMask,   xK_p),      windows W.focusUp)
 
-  , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "pidgin_messages")
+  , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "anki")
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "signal")
   , ( (myAltMask,   xK_y), namedScratchpadAction scratchpads "franz")
   , ( (myControlMask, xK_y), namedScratchpadAction scratchpads "slack")
