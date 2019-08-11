@@ -1,10 +1,11 @@
 import           Debug.Trace
 
 -- experimental
+import           XMonad.Prompt                       (XPConfig(..), XPPosition(CenteredAt))
 import qualified XMonad.Prompt.Pass                  as XP
 
 -- regular
-import           Data.List                           (isPrefixOf, isSuffixOf)
+import           Data.List                           (isPrefixOf, isSuffixOf, isSubsequenceOf)
 import qualified Data.Map                            as M
 
 import           XMonad
@@ -78,6 +79,20 @@ myBrowser  = "vimb"
 myQute     = "qutebrowser --backend webengine --qt-arg name global_qute"
 myEditor   = "emacsclient -c"
 myTerminal = "urxvt"
+
+myPromptConfig :: XPConfig
+myPromptConfig = def
+    { font = myFont
+    , bgColor = base03
+    , fgColor = base1
+    , fgHLight = yellow
+    , bgHLight = base03
+    , borderColor = base00
+    , position    = CenteredAt (1/8) (3/4)
+    , height = 28
+    , maxComplRows = Just 16
+    , searchPredicate = isSubsequenceOf
+    }
 
 myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
@@ -297,13 +312,13 @@ promptSubmap = M.fromList
   , ( (0, xK_c), spawn "/home/pi/bin/browser-dmenu chromium")
   , ( (0, xK_f), spawn "/home/pi/bin/browser-dmenu firefox")
   , ( (0, xK_q), spawn "/home/pi/bin/browser-dmenu qutebrowser")
-  -- , ( (0, xK_s), passPrompt defaultXPConfig)
+  -- , ( (0, xK_s), passPrompt myPromptConfig)
   , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
   , ( (0, xK_g), goToSelected def)
   , ( (0, xK_b), bringSelected def)
-  , ( (0, xK_p), XP.passTypePrompt def)
-  , ( (shiftMask, xK_p), XP.passPrompt def)
+  , ( (0, xK_p), XP.passTypePrompt myPromptConfig)
+  , ( (shiftMask, xK_p), XP.passPrompt myPromptConfig)
   ]
 
 -- submaps for less common window operations
@@ -409,9 +424,9 @@ myBaseKeys conf = myMainKeys ++
   , ( (myModMask,     xK_BackSpace), toggleSideWorkspace)
   , ( (myShiftMask,   xK_BackSpace), shiftToOtherWorkspace )
 
-  , ( (myModMask,     xK_space), switchProjectPrompt    def)
-  , ( (myShiftMask,   xK_space), shiftToProjectPrompt   def)
-  , ( (myControlMask, xK_space), changeProjectDirPrompt def)
+  , ( (myModMask,     xK_space), switchProjectPrompt    myPromptConfig)
+  , ( (myShiftMask,   xK_space), shiftToProjectPrompt   myPromptConfig)
+  , ( (myControlMask, xK_space), changeProjectDirPrompt myPromptConfig)
 
   -- move floating windows: snap to next barrier. Last param is a Maybe Int
   -- threshold in pixels but I couldn't find any impact;
@@ -503,7 +518,7 @@ topbar      = 5
 tabHeight   = 14
 
 myFont :: String
-myFont      = "xft:Iosevka:pixelsize=12"
+myFont      = "xft:Iosevka:pixelsize=20"
 
 
 active, base03, base02, base01, base00, base0, base1, base2, base3, yellow,
