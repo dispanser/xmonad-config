@@ -24,8 +24,7 @@ import           XMonad.Actions.FloatSnap            (Direction2D (..),
                                                       snapGrow, snapMove,
                                                       snapShrink)
 import           XMonad.Actions.GridSelect           (bringSelected,
-                                                      goToSelected, gridselect,
-                                                      gridselectWorkspace)
+                                                      goToSelected)
 import           XMonad.Actions.Promote              (promote)
 import           XMonad.Actions.SinkAll              (sinkAll)
 import           XMonad.Actions.Submap               (submap)
@@ -48,7 +47,7 @@ import           XMonad.Layout.NoBorders             (noBorders)
 import           XMonad.Layout.NoFrillsDecoration
 import           XMonad.Layout.ResizableTile
 import           XMonad.Layout.Simplest
-import           XMonad.Layout.Spacing               (smartSpacing, spacingRaw)
+import qualified XMonad.Layout.Spacing               as XS
 import           XMonad.Layout.SubLayouts            (GroupMsg (..), onGroup,
                                                       pullGroup, subLayout,
                                                       toSubl)
@@ -261,7 +260,7 @@ myLayoutHook = noBorders
                . useTransientFor
                . addTopBar
                . addTabs shrinkText myTabTheme
-               . smartSpacing 5
+               . XS.spacingRaw True (XS.Border 5 5 5 5) True (XS.Border 5 5 5 5) True
                . mkToggle (FULL ?? MIRROR ?? EOT)
                $ tabs ||| subs
   where
