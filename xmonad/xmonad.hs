@@ -1,8 +1,7 @@
 import           Debug.Trace
 
 -- experimental
-import           XMonad.Prompt.Pass                  (passGeneratePrompt,
-                                                      passPrompt)
+import qualified XMonad.Prompt.Pass                  as XP
 
 -- regular
 import           Data.List                           (isPrefixOf, isSuffixOf)
@@ -303,7 +302,8 @@ promptSubmap = M.fromList
   , ( (0, xK_d), spawn "dmenu_run")
   , ( (0, xK_g), goToSelected def)
   , ( (0, xK_b), bringSelected def)
-  , ( (0, xK_p), gridselectWorkspace def W.greedyView)
+  , ( (0, xK_p), XP.passTypePrompt def)
+  , ( (shiftMask, xK_p), XP.passPrompt def)
   ]
 
 -- submaps for less common window operations
