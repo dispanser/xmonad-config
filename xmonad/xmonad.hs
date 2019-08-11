@@ -9,7 +9,6 @@ import           Data.List                           (isPrefixOf, isSuffixOf)
 import qualified Data.Map                            as M
 
 import           XMonad
-import           XMonad.Prompt                       (defaultXPConfig)
 import qualified XMonad.StackSet                     as W
 
 import           XMonad.Actions.CycleWS              (nextScreen,
@@ -25,7 +24,6 @@ import           XMonad.Actions.FloatSnap            (Direction2D (..),
                                                       snapGrow, snapMove,
                                                       snapShrink)
 import           XMonad.Actions.GridSelect           (bringSelected,
-                                                      defaultGSConfig,
                                                       goToSelected, gridselect,
                                                       gridselectWorkspace)
 import           XMonad.Actions.Promote              (promote)
@@ -38,6 +36,8 @@ import           XMonad.Actions.WindowGo             (ifWindow, raiseMaybe)
 
 import           XMonad.Hooks.ManageHelpers          (doRectFloat)
 import           XMonad.Hooks.SetWMName              (setWMName)
+-- import           XMonad.Hooks.RefocusLast            (refocusLastEventHook,
+--                                                       refocusLastLogHook, shiftRL)
 
 import           XMonad.Layout.Accordion             (Accordion (..))
 import           XMonad.Layout.BoringWindows         (boringWindows)
@@ -48,7 +48,7 @@ import           XMonad.Layout.NoBorders             (noBorders)
 import           XMonad.Layout.NoFrillsDecoration
 import           XMonad.Layout.ResizableTile
 import           XMonad.Layout.Simplest
-import           XMonad.Layout.Spacing               (smartSpacing)
+import           XMonad.Layout.Spacing               (smartSpacing, spacingRaw)
 import           XMonad.Layout.SubLayouts            (GroupMsg (..), onGroup,
                                                       pullGroup, subLayout,
                                                       toSubl)
@@ -91,7 +91,6 @@ myManageHook = namedScratchpadManageHook scratchpads
   -- title: WM_NAME / _NET_WM_NAME
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
-  -- , appName   =?        "Slack Call Minipanel" --> doRectFloat (W.RationalRect (9/10) (9/10) (fullWidth / 10) (fullHeight / 10))
   , className =?           "Vimb"                 --> addTagHook  "b"
   , className =?           "Firefox"              --> addTagHook  "b"
   , className `startsWith` "Chromium"             --> addTagHook  "b"
@@ -101,6 +100,7 @@ myManageHook = namedScratchpadManageHook scratchpads
   , className =?           "Apvlv"                --> addTagHook  "d"
   , className =?           ".zathura-wrapped_"    --> addTagHook  "d"
   , className =?           "jetbrains-idea-ce"    --> addTagHook  "i"
+  , className =?           "R_x11"                --> addTagHook  "i"
   , className =?           "URxvt"                --> addTagHook  "u"
   , role      =?           "browser-edit"         --> doRectFloat lowerRightRect
   , appName   =?           "browser-edit"         --> doRectFloat lowerRightRect
@@ -135,10 +135,10 @@ scratchpads =
     ]
 
 emacsScratchpad :: String -> String -> ManageHook -> NamedScratchpad
-emacsScratchpad name file = NS name command query
+emacsScratchpad scratchName file = NS scratchName command q
   where
-    command = "emacs -T " ++ name ++ " " ++ file
-    query   = title =? name
+    command = "emacs -T " ++ scratchName ++ " " ++ file
+    q       = title =? scratchName
 
 isPidginContactList, isPidginMessageWindow, isPidginClass, isBuddy :: Query Bool
 isPidginContactList   = isPidginClass <&&> isBuddy
@@ -147,33 +147,33 @@ isPidginClass = className =? "Pidgin"
 isBuddy = title =? "Buddy List"
 
 notQ :: Query Bool -> Query Bool
-notQ query = not <$> query
+notQ q = not <$> q
 
 -- query that checks if the provided query ends with the given sequence.
 endsWith :: Eq a => Query [a] -> [a] -> Query Bool
-endsWith q x = isSuffixOf x <$> q
+endsWith q suffix = isSuffixOf suffix <$> q
 
 -- query that checks if the provided query starts with the given sequence.
 startsWith :: Eq a => Query [a] -> [a] -> Query Bool
-startsWith q x = isPrefixOf x <$> q
+startsWith q prefix = isPrefixOf prefix <$> q
 
 localTmux :: String -> X ()
 localTmux = localScratch tmux
 
 localEmacsClient :: FilePath -> String -> String -> X ()
-localEmacsClient file name server = do
+localEmacsClient file suffix server = do
   file' <- projectFile file
   let ecF localName = "emacsclient -c -F '((name . \"" ++ localName ++ "\"))' -s " ++ server ++ " -a '' " ++ file'
-  localScratch ecF name
+  localScratch ecF suffix
 
--- | create a scratchpad given a function that expects the tag name as a @String
+-- | create a scratchpad given a function that expects the tag suffix as a @String@
 --   and produces the command to be executed, and the local window type that is
 --   a part of the globally valid local tag name
 localScratch :: (String -> String) -> String -> X ()
-localScratch cmdF name = withWindowSet $ \ws -> do
+localScratch cmdF suffix = withWindowSet $ \ws -> do
   let tag       =  W.currentTag ws
   let focused   =  W.peek ws
-  let localName =  getMainWorkspace tag ++ "_" ++ name
+  let localName =  getMainWorkspace tag ++ "_" ++ suffix
   let command   = cmdF localName
   case focused of
     Just w -> do
@@ -188,9 +188,9 @@ tmuxScratchpad session = NS session command (appName =? session)
   where command = tmux session
 
 shellScratchpad :: String -> ManageHook -> NamedScratchpad
-shellScratchpad session = NS session command (appName =? name)
-  where command = "urxvt -name " ++ name ++ " -e " ++ session
-        name    = filter (/= ' ') session
+shellScratchpad session = NS session command (appName =? name')
+  where command = "urxvt -name " ++ name' ++ " -e " ++ session
+        name'   = filter (/= ' ') session
 
 tmux :: String -> String
 tmux session = myTerminal ++ " -name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
@@ -242,7 +242,7 @@ workspaceMask       = myModMask
 main :: IO ()
 main = do
   ps <- projects
-  xmonad $ dynamicProjects ps defaultConfig
+  xmonad $ dynamicProjects ps def
     { borderWidth        = 1
     , modMask            = myModMask
     , terminal           = myTerminal
@@ -250,7 +250,7 @@ main = do
     , layoutHook         = myLayoutHook
     , startupHook        = setWMName "LG3D"
     , manageHook         = myManageHook
-    , logHook            = updatePointer (0.5, 0.5) (0, 0)
+    , logHook            = updatePointer (0.5, 0.5) (0, 0) -- <+> refocusLastLogHook
     , keys               = myKeys
     , normalBorderColor  = "#cccccc"
     , focusedBorderColor = "#cd8b00" }
@@ -302,9 +302,9 @@ promptSubmap = M.fromList
   -- , ( (0, xK_s), passPrompt defaultXPConfig)
   , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "dmenu_run")
-  , ( (0, xK_g), goToSelected defaultGSConfig)
-  , ( (0, xK_b), bringSelected defaultGSConfig)
-  , ( (0, xK_p), gridselectWorkspace defaultGSConfig W.greedyView)
+  , ( (0, xK_g), goToSelected def)
+  , ( (0, xK_b), bringSelected def)
+  , ( (0, xK_p), gridselectWorkspace def W.greedyView)
   ]
 
 -- submaps for less common window operations
@@ -380,8 +380,10 @@ myMainKeys =
   , ( (myModMask,               xK_o),         localTmux "overlay")
   , ( (myModMask,               xK_semicolon), projectBrowser)
   , ( (myModMask,               xK_F1),         spawn "internal")
-  , ( (myModMask,               xK_F2),         spawn "office")
-  , ( (myModMask,               xK_F3),         spawn "desk_s")
+  , ( (myModMask,               xK_F2),         spawn "d2")
+  , ( (myModMask,               xK_F3),         spawn "d1")
+  , ( (myModMask,               xK_F4),         spawn "internal_off.sh")
+  , ( (myModMask,               xK_F7),         spawn "xmodmap /home/pi/.Xmodmap")
   , ( (myModMask,               xK_F12),        spawn "xmodmap /home/pi/.Xmodmap")
   , ( (myModMask,               xK_F8),         spawn "/home/pi/bin/block_all.sh")
   , ( (myModMask,               xK_F9),         spawn "/home/pi/bin/unblock_all.sh")
@@ -408,9 +410,9 @@ myBaseKeys conf = myMainKeys ++
   , ( (myModMask,     xK_BackSpace), toggleSideWorkspace)
   , ( (myShiftMask,   xK_BackSpace), shiftToOtherWorkspace )
 
-  , ( (myModMask,     xK_space), switchProjectPrompt    defaultXPConfig)
-  , ( (myShiftMask,   xK_space), shiftToProjectPrompt   defaultXPConfig)
-  , ( (myControlMask, xK_space), changeProjectDirPrompt defaultXPConfig)
+  , ( (myModMask,     xK_space), switchProjectPrompt    def)
+  , ( (myShiftMask,   xK_space), shiftToProjectPrompt   def)
+  , ( (myControlMask, xK_space), changeProjectDirPrompt def)
 
   -- move floating windows: snap to next barrier. Last param is a Maybe Int
   -- threshold in pixels but I couldn't find any impact;
@@ -453,9 +455,9 @@ toggleTag tag window = do
   else addTag tag window
 
 runOrRaiseLocal :: String -> X ()
-runOrRaiseLocal name = do
+runOrRaiseLocal suffix = do
   workspace <- gets (W.currentTag . windowset)
-  let localName = workspace ++ "_" ++ name
+  let localName = workspace ++ "_" ++ suffix
   raiseMaybe (spawn $ tmux localName) (appName =? localName)
 
 -- | Send a key to the window
@@ -471,6 +473,7 @@ sendKeyEvent mask sym w = do
   pure ()
 
 -- curtesy of ethanschoonover config somewhere over at github
+myTabTheme :: Theme
 myTabTheme = def
     { fontName              = myFont
     , activeColor           = active
@@ -482,6 +485,7 @@ myTabTheme = def
     , decoHeight            = tabHeight
     }
 
+topBarTheme :: Theme
 topBarTheme = def
     { fontName              = myFont
     , inactiveBorderColor   = base03
@@ -495,13 +499,17 @@ topBarTheme = def
     , decoHeight            = topbar
     }
 
+topbar, tabHeight :: Dimension
 topbar      = 5
 tabHeight   = 14
 
+myFont :: String
 myFont      = "xft:Iosevka:pixelsize=12"
 
-active      = blue
 
+active, base03, base02, base01, base00, base0, base1, base2, base3, yellow,
+  orange, red, magenta, violet, blue, cyan, green :: String
+active      = blue
 base03  = "#002b36"
 base02  = "#073642"
 base01  = "#586e75"

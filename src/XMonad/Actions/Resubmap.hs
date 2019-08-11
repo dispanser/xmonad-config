@@ -30,8 +30,8 @@ resubmapDefaultWithKey :: ((KeyMask, KeySym) -> X ())
 resubmapDefaultWithKey defAction keys = do
     XConf { theRoot = root, display = d } <- ask
 
-    io $ grabKeyboard d root False grabModeAsync grabModeAsync currentTime
-    io $ grabPointer d root False buttonPressMask grabModeAsync grabModeAsync
+    _ <- io $ grabKeyboard d root False grabModeAsync grabModeAsync currentTime
+    _ <- io $ grabPointer d root False buttonPressMask grabModeAsync grabModeAsync
                      none none currentTime
 
     (m, s) <- io $ allocaXEvent $ \p -> fix $ \nextkey -> do

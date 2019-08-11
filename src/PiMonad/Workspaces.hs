@@ -1,6 +1,7 @@
 module PiMonad.Workspaces ( projects
                           , projectFile
                           , toggleSideWorkspace
+                          , getSideWorkspace
                           , getMainWorkspace
                           , getOtherWorkspace
                           , shiftToOtherWorkspace )
@@ -8,13 +9,12 @@ where
 
 import           XMonad
 import           XMonad.Actions.DynamicProjects   (Project (..), currentProject,
-                                                   projectDirectory, shiftToProject)
+                                                   projectDirectory)
 import           XMonad.Actions.DynamicWorkspaces (addWorkspace)
 import qualified XMonad.StackSet                  as W
 
 import           Control.Monad                    (filterM)
 import           Data.List                        (isSuffixOf)
-import           Data.Semigroup                   ((<>))
 import           System.Directory                 (doesDirectoryExist,
                                                    getHomeDirectory,
                                                    listDirectory)
