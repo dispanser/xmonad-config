@@ -1,10 +1,11 @@
 import           Debug.Trace
 
--- experimental
-import           XMonad.Prompt                       (XPConfig(..), XPPosition(CenteredAt))
+import           XMonad.Prompt                       (XPConfig(..), XPPosition(CenteredAt),
+                                                     defaultXPKeymap')
 import qualified XMonad.Prompt.Pass                  as XP
 
 -- regular
+import           Data.Char                           (isAlpha)
 import           Data.List                           (isPrefixOf, isSuffixOf, isSubsequenceOf)
 import qualified Data.Map                            as M
 
@@ -80,6 +81,10 @@ myQute     = "qutebrowser --backend webengine --qt-arg name global_qute"
 myEditor   = "emacsclient -c"
 myTerminal = "urxvt"
 
+-- for word-level edit operations, split at each non-alpha char
+wordSeparator :: Char -> Bool
+wordSeparator = not . isAlpha
+
 myPromptConfig :: XPConfig
 myPromptConfig = def
     { font = myFont
@@ -88,6 +93,7 @@ myPromptConfig = def
     , fgHLight = yellow
     , bgHLight = base03
     , borderColor = base00
+    , promptKeymap = defaultXPKeymap' wordSeparator
     , position    = CenteredAt (1/8) (3/4)
     , height = 28
     , maxComplRows = Just 16
