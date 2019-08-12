@@ -90,7 +90,7 @@ wordSeparator = not . isAlpha
 -- variant of @isSubsequenceOf@
 myPromptConfig :: XPConfig
 myPromptConfig = def
-    { font = myFont
+    { font = myFont 24
     , bgColor = base03
     , fgColor = base1
     , fgHLight = yellow
@@ -98,7 +98,7 @@ myPromptConfig = def
     , borderColor = base00
     , promptKeymap = defaultXPKeymap' wordSeparator
     , position    = CenteredAt (1/8) (3/4)
-    , height = 28
+    , height = 32
     , maxComplRows = Just 16
     , searchPredicate = isSubsequenceOf
     }
@@ -498,7 +498,7 @@ sendKeyEvent mask sym w = do
 -- curtesy of ethanschoonover config somewhere over at github
 myTabTheme :: Theme
 myTabTheme = def
-    { fontName              = myFont
+    { fontName              = myFont 16
     , activeColor           = active
     , inactiveColor         = base02
     , activeBorderColor     = active
@@ -510,7 +510,7 @@ myTabTheme = def
 
 topBarTheme :: Theme
 topBarTheme = def
-    { fontName              = myFont
+    { fontName              = myFont 16
     , inactiveBorderColor   = base03
     , inactiveColor         = base03
     , inactiveTextColor     = base03
@@ -526,8 +526,8 @@ topbar, tabHeight :: Dimension
 topbar      = 5
 tabHeight   = 14
 
-myFont :: String
-myFont      = "xft:Iosevka:pixelsize=20"
+myFont :: Int -> String
+myFont ftSize = "xft:Iosevka:pixelsize=" ++ show ftSize
 
 
 active, base03, base02, base01, base00, base0, base1, base2, base3, yellow,
