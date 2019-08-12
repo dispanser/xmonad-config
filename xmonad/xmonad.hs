@@ -85,6 +85,9 @@ myTerminal = "urxvt"
 wordSeparator :: Char -> Bool
 wordSeparator = not . isAlpha
 
+-- TODO: when 0.16 hits, use sorter = FuzzyMatch.fuzzySort for prioritized search
+-- result order. Also, could use FuzzyMatch.fuzzyMatch, which is a case-insensitive
+-- variant of @isSubsequenceOf@
 myPromptConfig :: XPConfig
 myPromptConfig = def
     { font = myFont
