@@ -149,7 +149,7 @@ scratchpads =
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
     , NS "qutebrowser" myQute (appName =? "global_qute")  ( customFloating leftBarRect )
-    , NS "slack" "slack-dontstart" (title =? "Slack - TomTom" <&&> role =? "browser-window") ( customFloating lowerRightRect )
+    , NS "slack" "slack-dontstart" (title `startsWith` "Slack - " <&&> role =? "browser-window") ( customFloating lowerRightRect )
     , NS "signal" "signal-desktop" (title =? "Signal")  ( customFloating lowerRightRect )
     , NS "anki" "anki" (className =? "Anki")            ( customFloating centeredRect )
     -- , NS "pidgin_contacts" "pidgin-dontstart" isPidginContactList   ( customFloating contactBarRect )
