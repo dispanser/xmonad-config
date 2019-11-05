@@ -112,6 +112,7 @@ myManageHook = namedScratchpadManageHook scratchpads
   , appName   `endsWith`   "_org"                 --> doRectFloat centeredRect
   -- title: WM_NAME / _NET_WM_NAME
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
+  , className  =?          "Pavucontrol"             --> doRectFloat centeredRect
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
   , className =?           "Vimb"                 --> addTagHook  "b"
   , className =?           "Firefox"              --> addTagHook  "b"
@@ -323,7 +324,7 @@ promptSubmap = M.fromList
   , ( (0, xK_q), spawn "/home/pi/bin/browser-dmenu qutebrowser")
   -- , ( (0, xK_s), passPrompt myPromptConfig)
   , ( (0, xK_s), spawn "passmenu")
-  , ( (0, xK_d), spawn "dmenu_run")
+  , ( (0, xK_d), spawn "rofi -show run -theme solarized_alternate")
   , ( (0, xK_g), goToSelected def)
   , ( (0, xK_b), bringSelected def)
   , ( (0, xK_p), XP.passTypePrompt myPromptConfig)
