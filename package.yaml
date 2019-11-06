@@ -10,8 +10,8 @@ license:     MIT
 ghc-options: -Wall
 dependencies:
   - base >= 4.8.0 && <5
-  - xmonad >= 0.15 && < 0.16
-  - xmonad-contrib >= 0.15 && < 0.16
+  - xmonad # >= 0.15 && < 0.16
+  - xmonad-contrib # >= 0.15 && < 0.16
   - containers
 
 library:

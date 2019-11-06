@@ -1,8 +1,6 @@
 resolver: lts-14.0
 packages:
 - '.'
-- '../xmonad'
-- '../xmonad-contrib'
 
 extra-deps:
 - X11-xft-0.3.1
