@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module PiMonad.Scratches ( doShiftAndFocus
+module PiMonad.Scratches ( showOrBring
                          , projectBrowser
                          )
 where
@@ -12,15 +12,26 @@ import           XMonad.Actions.DynamicProjects (Project (..), currentProject)
 import           XMonad.Actions.WindowGo        (ifWindow)
 import qualified XMonad.StackSet                as W
 
-doShiftAndFocus :: WorkspaceId -> ManageHook
-doShiftAndFocus i = do
+-- if the windows' workspace is visible, go there and focus
+-- otherwise, bring to current workspace and focus
+showOrBring :: WorkspaceId -> ManageHook
+showOrBring i = do
   w <- ask
-  doF $ W.focusWindow w . W.shiftWin i w
+  -- let (Just curentWS) = W.findTag w
+  doF $ showOrBringWindow i w
+
+-- showOrBringWindow :: WorkspaceId -> Window -> W.StackSet -> ManageHook
+showOrBringWindow i w ss =
+    let (Just currentWS) = W.findTag w ss
+        visibleWS = W.tag . W.workspace <$> W.visible ss
+    in if currentWS `elem` visibleWS -- the window is visible elsewhere
+          then W.focusWindow w $ W.view i ss
+          else W.focusWindow w $ W.shiftWin i w ss
 
 projectBrowser :: X ()
 projectBrowser = projectScratch cmdF
   where
-    cmdF (Project {..} ) = ( "qutebrowser --qt-arg name " ++ localName ++
+    cmdF Project {..} = ( "qutebrowser --qt-arg name " ++ localName ++
                              " --target window --basedir " ++ projectDir
                            , appName =? localName )
       where localName  = getMainWorkspace projectName ++ "_qute"
@@ -34,9 +45,8 @@ projectScratch :: ( Project -> (String, Query Bool) ) -> X ()
 projectScratch cmdF = withWindowSet $ \ws -> do
   pr <- currentProject
   let (command, query) = cmdF pr
-  liftIO $ putStrLn command
   let focused = W.peek ws
-  let windowQuery = ifWindow query (doShiftAndFocus $ W.currentTag ws) (spawn command)
+  let windowQuery = ifWindow query (showOrBring $ W.currentTag ws) (spawn command)
   case focused of
     Just w -> do
       matches <- runQuery  query w

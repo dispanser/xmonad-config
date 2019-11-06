@@ -62,7 +62,7 @@ import           XMonad.Util.NamedScratchpad         (NamedScratchpad (..),
 
 import           Debug.TrackFloating                 (trackFloating,
                                                       useTransientFor)
-import           PiMonad.Scratches                   (doShiftAndFocus,
+import           PiMonad.Scratches                   (showOrBring,
                                                       projectBrowser)
 import           PiMonad.Workspaces                  (getMainWorkspace,
                                                       getOtherWorkspace,
@@ -202,9 +202,17 @@ localScratch cmdF suffix = withWindowSet $ \ws -> do
     Just w -> do
       an <- runQuery appName w
       if an == localName
-        then windows $ W.shift "NSP"
-        else ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn command)
-    Nothing -> ifWindow (appName =? localName) (doShiftAndFocus tag) (spawn command)
+        then toScratch
+        else fromScratchOrFocus (appName =? localName) tag command
+    Nothing -> fromScratchOrFocus (appName =? localName) tag command
+
+toScratch :: X ()
+toScratch = windows $ W.shift "NSP"
+
+-- find a window using the given query, focus it on the current workspace or
+-- on another, visible workspace. If it doesn't exist, run the command instead.
+fromScratchOrFocus :: Query Bool -> WorkspaceId -> String -> X ()
+fromScratchOrFocus q i c = ifWindow q (showOrBring i) (spawn c)
 
 tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
 tmuxScratchpad session = NS session command (appName =? session)
