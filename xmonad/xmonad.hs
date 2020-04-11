@@ -1,5 +1,3 @@
-import           Debug.Trace
-
 import           XMonad.Prompt                       (XPConfig(..), XPPosition(CenteredAt),
                                                      defaultXPKeymap')
 import qualified XMonad.Prompt.Pass                  as XP
@@ -62,8 +60,7 @@ import           XMonad.Util.NamedScratchpad         (NamedScratchpad (..),
 
 import           Debug.TrackFloating                 (trackFloating,
                                                       useTransientFor)
-import           PiMonad.Scratches                   (showOrBring,
-                                                      projectBrowser)
+import qualified PiMonad.Scratches                   as S
 import           PiMonad.Workspaces                  (getMainWorkspace,
                                                       getOtherWorkspace,
                                                       projectFile, projects,
@@ -112,7 +109,6 @@ myManageHook = namedScratchpadManageHook scratchpads
   , appName   `endsWith`   "_org"                 --> doRectFloat centeredRect
   -- title: WM_NAME / _NET_WM_NAME
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
-  , className  =?          "Pavucontrol"             --> doRectFloat centeredRect
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
   , className =?           "Vimb"                 --> addTagHook  "b"
   , className =?           "Firefox"              --> addTagHook  "b"
@@ -121,7 +117,7 @@ myManageHook = namedScratchpadManageHook scratchpads
   , className =?           "Emacs"                --> addTagHook  "e"
   , className =?           "Gvim"                 --> addTagHook  "v"
   , className =?           "Apvlv"                --> addTagHook  "d"
-  , className =?           ".zathura-wrapped_"    --> addTagHook  "d"
+  , className =?           "Zathura"              --> addTagHook  "d"
   , className =?           "jetbrains-idea-ce"    --> addTagHook  "i"
   , className =?           "R_x11"                --> addTagHook  "i"
   , className =?           "URxvt"                --> addTagHook  "u"
@@ -146,15 +142,15 @@ scratchpads =
     , tmuxScratchpad "_mail"                              ( customFloating centeredRect )
     , tmuxScratchpad "hud"                                ( customFloating upperBarRect )
     , tmuxScratchpad "config"                             ( customFloating leftBarRect )
+    , NS "pavucontrol" "pavucontrol" (className =? "Pavucontrol") ( customFloating centeredRect )
     , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
     , NS "qutebrowser" myQute (appName =? "global_qute")  ( customFloating leftBarRect )
     , NS "slack" "slack-dontstart" (title `startsWith` "Slack | " <&&> role =? "browser-window") ( customFloating lowerRightRect )
-    , NS "signal" "signal-desktop" (title =? "Signal")  ( customFloating lowerRightRect )
-    , NS "anki" "anki" (className =? "Anki")            ( customFloating centeredRect )
-    -- , NS "pidgin_contacts" "pidgin-dontstart" isPidginContactList   ( customFloating contactBarRect )
-    -- , NS "pidgin_messages" "pidgin-dontstart" isPidginMessageWindow ( customFloating lowerRightRect )
+    , NS "signal" "signal-desktop" (title `startsWith` "Signal")    ( customFloating lowerRightRect )
+    , NS "anki" "anki" (className =? "Anki")              ( customFloating centeredRect )
+    , NS "spotify" "spotify" (className =? "Spotify")     ( customFloating centeredRect )
     ]
 
 emacsScratchpad :: String -> String -> ManageHook -> NamedScratchpad
@@ -181,38 +177,13 @@ startsWith :: Eq a => Query [a] -> [a] -> Query Bool
 startsWith q prefix = isPrefixOf prefix <$> q
 
 localTmux :: String -> X ()
-localTmux = localScratch tmux
+localTmux = S.localScratch tmux
 
 localEmacsClient :: FilePath -> String -> String -> X ()
 localEmacsClient file suffix server = do
   file' <- projectFile file
   let ecF localName = "emacsclient -c -F '((name . \"" ++ localName ++ "\"))' -s " ++ server ++ " -a '' " ++ file'
-  localScratch ecF suffix
-
--- | create a scratchpad given a function that expects the tag suffix as a @String@
---   and produces the command to be executed, and the local window type that is
---   a part of the globally valid local tag name
-localScratch :: (String -> String) -> String -> X ()
-localScratch cmdF suffix = withWindowSet $ \ws -> do
-  let tag       =  W.currentTag ws
-  let focused   =  W.peek ws
-  let localName =  getMainWorkspace tag ++ "_" ++ suffix
-  let command   = cmdF localName
-  case focused of
-    Just w -> do
-      an <- runQuery appName w
-      if an == localName
-        then toScratch
-        else fromScratchOrFocus (appName =? localName) tag command
-    Nothing -> fromScratchOrFocus (appName =? localName) tag command
-
-toScratch :: X ()
-toScratch = windows $ W.shift "NSP"
-
--- find a window using the given query, focus it on the current workspace or
--- on another, visible workspace. If it doesn't exist, run the command instead.
-fromScratchOrFocus :: Query Bool -> WorkspaceId -> String -> X ()
-fromScratchOrFocus q i c = ifWindow q (showOrBring i) (spawn c)
+  S.localScratch ecF suffix
 
 tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
 tmuxScratchpad session = NS session command (appName =? session)
@@ -249,10 +220,10 @@ lowerRightRect = W.RationalRect (1/2) (1/2) (fullWidth / 2) (fullHeight / 2)
 tags :: [Tag]
 tags = [ 'b' -- project-related documentation (auto-assigned to vimb)
        , 'e' -- editor / emacs (auto-assigned to emacs instances)
-       , 'd' -- documentation of any kind
+       , 'd' -- documentation of any kind: zathura, apvlv, ...
        , 'v' -- vim instance
        , 'x' -- assign freely, 'extended'
-       , 'i' -- idea
+       , 'i' -- IDEs: idea, eclipse
        , 'u' -- urxvt
        ]
 
@@ -321,6 +292,7 @@ appSubmap = M.fromList
   , ( (0, xK_v), spawn "gvim")
   , ( (0, xK_h), namedScratchpadAction scratchpads "htop")
   , ( (0, xK_l), namedScratchpadAction scratchpads "journalctl -xf")
+  , ( (0, xK_s), namedScratchpadAction scratchpads "spotify")
   ]
 
 -- submaps for various prompt-based actions
@@ -330,8 +302,6 @@ promptSubmap = M.fromList
   , ( (0, xK_c), spawn "/home/pi/bin/browser-dmenu chromium")
   , ( (0, xK_f), spawn "/home/pi/bin/browser-dmenu firefox")
   , ( (0, xK_q), spawn "/home/pi/bin/browser-dmenu qutebrowser")
-  -- , ( (0, xK_s), passPrompt myPromptConfig)
-  , ( (0, xK_s), spawn "passmenu")
   , ( (0, xK_d), spawn "rofi -show run -theme solarized_alternate")
   , ( (0, xK_g), goToSelected def)
   , ( (0, xK_b), bringSelected def)
@@ -410,15 +380,13 @@ myMainKeys =
   -- overlay terminal: one per workspace. Very similar to named scratchpads,
   -- but doesn't have to be registered at startup.
   , ( (myModMask,               xK_o),         localTmux "overlay")
-  , ( (myModMask,               xK_semicolon), projectBrowser)
-  , ( (myModMask,               xK_F1),         spawn "internal")
-  , ( (myModMask,               xK_F2),         spawn "d2")
-  , ( (myModMask,               xK_F3),         spawn "d1")
-  , ( (myModMask,               xK_F4),         spawn "internal_off.sh")
-  , ( (myModMask,               xK_F7),         spawn "xmodmap /home/pi/.Xmodmap")
-  , ( (myModMask,               xK_F12),        spawn "xmodmap /home/pi/.Xmodmap")
-  , ( (myModMask,               xK_F8),         spawn "/home/pi/bin/block_all.sh")
-  , ( (myModMask,               xK_F9),         spawn "/home/pi/bin/unblock_all.sh")
+  , ( (myModMask,               xK_semicolon), S.projectBrowser)
+  , ( (myModMask,               xK_F5),        spawn "/home/pi/bin/btk.sh")
+  , ( (myModMask,               xK_F7),        spawn "xmodmap /home/pi/.Xmodmap")
+  , ( (myModMask,               xK_F11),       spawn "xlock -mode blank")
+  , ( (myModMask,               xK_F12),       spawn "xmodmap /home/pi/.Xmodmap")
+  , ( (myModMask,               xK_F8),        spawn "/home/pi/bin/block_all.sh")
+  , ( (myModMask,               xK_F9),        spawn "/home/pi/bin/unblock_all.sh")
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
@@ -433,6 +401,7 @@ myBaseKeys conf = myMainKeys ++
   , ( (myModMask,   xK_n),      windows W.focusDown)
   , ( (myModMask,   xK_p),      windows W.focusUp)
 
+  , ( (myAltMask,   xK_v), namedScratchpadAction scratchpads "pavucontrol")
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "anki")
   , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "signal")
   , ( (myAltMask,   xK_y), namedScratchpadAction scratchpads "franz")
