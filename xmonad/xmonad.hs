@@ -6,6 +6,7 @@ import qualified XMonad.Prompt.Pass                  as XP
 import           Data.Char                           (isAlpha)
 import           Data.List                           (isPrefixOf, isSuffixOf, isSubsequenceOf)
 import qualified Data.Map                            as M
+import           Data.Maybe                          (fromMaybe)
 
 import           XMonad
 import qualified XMonad.StackSet                     as W
@@ -34,6 +35,7 @@ import           XMonad.Actions.WindowGo             (ifWindow, raiseMaybe)
 
 import           XMonad.Hooks.ManageHelpers          (doRectFloat)
 import           XMonad.Hooks.SetWMName              (setWMName)
+import           XMonad.Hooks.UrgencyHook            (UrgencyHook(..), focusUrgent, withUrgencyHook)
 -- import           XMonad.Hooks.RefocusLast            (refocusLastEventHook,
 --                                                       refocusLastLogHook, shiftRL)
 
@@ -53,11 +55,12 @@ import           XMonad.Layout.SubLayouts            (GroupMsg (..), onGroup,
 import           XMonad.Layout.Tabbed
 import           XMonad.Layout.WindowNavigation
 
+import           XMonad.Util.NamedWindows            (getName)
 import           XMonad.Util.NamedScratchpad         (NamedScratchpad (..),
                                                       customFloating,
                                                       namedScratchpadAction,
                                                       namedScratchpadManageHook)
-
+import           XMonad.Util.Run                     (safeSpawn)
 import           Debug.TrackFloating                 (trackFloating,
                                                       useTransientFor)
 import qualified PiMonad.Scratches                   as S
@@ -244,7 +247,7 @@ workspaceMask       = myModMask
 main :: IO ()
 main = do
   ps <- projects
-  xmonad $ dynamicProjects ps def
+  xmonad $ withUrgencyHook LibNotifyUrgencyHook $ dynamicProjects ps def
     { borderWidth        = 1
     , modMask            = myModMask
     , terminal           = myTerminal
@@ -350,6 +353,7 @@ myMainKeys =
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
   , ( (myModMask,               xK_slash),     sendMessage $ Toggle MIRROR)
   , ( (myModMask,               xK_t),         runOrRaiseLocal "term")
+  , ( (myModMask,               xK_slash),     focusUrgent)
 
   -- SubLayout: iterate inside a single group
   , ( (myModMask,               xK_period),    onGroup W.focusDown')
@@ -472,6 +476,18 @@ sendKeyEvent mask sym w = do
     setKeyEvent e w rw 0 mask keyCode True
     sendEvent dpy w False structureNotifyMask e
   pure ()
+
+-- notify-send: copied from http://pbrisbin.com/posts/using_notify_osd_for_xmonad_notifications/
+data LibNotifyUrgencyHook = LibNotifyUrgencyHook deriving (Read, Show)
+
+instance UrgencyHook LibNotifyUrgencyHook where
+    urgencyHook LibNotifyUrgencyHook w = do
+        name     <- getName w
+        Just idx <- fmap (W.findTag w) $ gets windowset
+        notify (show name) $ Just $ "workspace " ++ idx
+
+notify :: String -> Maybe String -> X()
+notify summary body = safeSpawn "notify-send" [summary, fromMaybe "" body]
 
 -- curtesy of ethanschoonover config somewhere over at github
 myTabTheme :: Theme
