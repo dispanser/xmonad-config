@@ -151,7 +151,8 @@ scratchpads =
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
     , NS "qutebrowser" myQute (appName =? "global_qute")  ( customFloating leftBarRect )
     , NS "slack" "slack-dontstart" (title `startsWith` "Slack | " <&&> role =? "browser-window") ( customFloating lowerRightRect )
-    , NS "signal" "signal-desktop" (title `startsWith` "Signal")    ( customFloating lowerRightRect )
+    -- , NS "signal" "signal-desktop" (title `startsWith` "Signal")    ( customFloating lowerRightRect )
+    , NS "pidgin" "pidgin" (className =? "Pidgin")        ( customFloating lowerRightRect )
     , NS "anki" "anki" (className =? "Anki")              ( customFloating centeredRect )
     , NS "spotify" "spotify" (className =? "Spotify")     ( customFloating centeredRect )
     ]
@@ -162,6 +163,7 @@ emacsScratchpad scratchName file = NS scratchName command q
     command = "emacs -T " ++ scratchName ++ " " ++ file
     q       = title =? scratchName
 
+-- outdated: using the pidgin-window-merge plugin, no message window / contact lis separation
 isPidginContactList, isPidginMessageWindow, isPidginClass, isBuddy :: Query Bool
 isPidginContactList   = isPidginClass <&&> isBuddy
 isPidginMessageWindow = isPidginClass <&&> notQ isBuddy
@@ -301,8 +303,7 @@ appSubmap = M.fromList
 -- submaps for various prompt-based actions
 promptSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
 promptSubmap = M.fromList
-  [ ( (0, xK_b), spawn $ "/home/pi/bin/browser-dmenu " ++ myBrowser)
-  , ( (0, xK_c), spawn "/home/pi/bin/browser-dmenu chromium")
+  [ ( (0, xK_c), spawn "/home/pi/bin/browser-dmenu chromium")
   , ( (0, xK_f), spawn "/home/pi/bin/browser-dmenu firefox")
   , ( (0, xK_q), spawn "/home/pi/bin/browser-dmenu qutebrowser")
   , ( (0, xK_d), spawn "rofi -show run -theme solarized_alternate")
@@ -321,6 +322,7 @@ windowSubmap = M.fromList
   , ( (0, xK_l),         sendMessage NextLayout)
   , ( (0, xK_i),         toSubl NextLayout)
   , ( (0, xK_k),         kill)
+  , ( (0, xK_slash),     sendMessage $ Toggle MIRROR)
   ]
 
 mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
@@ -351,7 +353,6 @@ myMainKeys =
   , ( (myModMask,               xK_g),         localEmacsClient "master.org"  "org" "org-mode")
   , ( (myModMask,               xK_backslash), localEmacsClient "scratch.org" "scratch" "org-mode")
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
-  , ( (myModMask,               xK_slash),     sendMessage $ Toggle MIRROR)
   , ( (myModMask,               xK_t),         runOrRaiseLocal "term")
   , ( (myModMask,               xK_slash),     focusUrgent)
 
@@ -407,7 +408,7 @@ myBaseKeys conf = myMainKeys ++
 
   , ( (myAltMask,   xK_v), namedScratchpadAction scratchpads "pavucontrol")
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "anki")
-  , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "signal")
+  , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin")
   , ( (myAltMask,   xK_y), namedScratchpadAction scratchpads "franz")
   , ( (myControlMask, xK_y), namedScratchpadAction scratchpads "slack")
 
