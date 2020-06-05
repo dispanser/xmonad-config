@@ -112,18 +112,22 @@ myManageHook = namedScratchpadManageHook scratchpads
   , appName   `endsWith`   "_org"                 --> doRectFloat centeredRect
   -- title: WM_NAME / _NET_WM_NAME
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
+  , title `startsWith` "Slack"                    --> addTagHook "m"
+  , title `startsWith` "Signal"                   --> addTagHook "m"
+  , className =?           "Franz"                --> addTagHook "m"
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
-  , className =?           "Vimb"                 --> addTagHook  "b"
-  , className =?           "Firefox"              --> addTagHook  "b"
-  , className `startsWith` "Chromium"             --> addTagHook  "b"
-  , className =?           "qutebrowser"          --> addTagHook  "b"             >>     doRectFloat leftBarRect
-  , className =?           "Emacs"                --> addTagHook  "e"
-  , className =?           "Gvim"                 --> addTagHook  "v"
-  , className =?           "Apvlv"                --> addTagHook  "d"
-  , className =?           "Zathura"              --> addTagHook  "d"
-  , className =?           "jetbrains-idea-ce"    --> addTagHook  "i"
-  , className =?           "R_x11"                --> addTagHook  "i"
-  , className =?           "URxvt"                --> addTagHook  "u"
+  , className =?           "Vimb"                 --> addTagHook "b"
+  , className =?           "Firefox"              --> addTagHook "b"
+  , className `startsWith` "Chromium"             --> addTagHook "b"
+  , className =?           "qutebrowser"          --> addTagHook "b"             >>     doRectFloat leftBarRect
+  , className =?           "Emacs"                --> addTagHook "e"
+  , className =?           "Gvim"                 --> addTagHook "v"
+  , className =?           "Apvlv"                --> addTagHook "d"
+  , className =?           "Zathura"              --> addTagHook "d"
+  , className =?           "jetbrains-idea-ce"    --> addTagHook "i"
+  , className =?           "R_x11"                --> addTagHook "i"
+  , className =?           "URxvt"                --> addTagHook "u"
+  , className =?           "Spotify"              --> doRectFloat rightBarRect
   , role      =?           "browser-edit"         --> doRectFloat lowerRightRect
   , appName   =?           "browser-edit"         --> doRectFloat lowerRightRect
   ]
@@ -150,8 +154,6 @@ scratchpads =
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
     , NS "qutebrowser" myQute (appName =? "global_qute")  ( customFloating leftBarRect )
-    , NS "slack" "slack-dontstart" (title `startsWith` "Slack | " <&&> role =? "browser-window") ( customFloating lowerRightRect )
-    -- , NS "signal" "signal-desktop" (title `startsWith` "Signal")    ( customFloating lowerRightRect )
     , NS "pidgin" "pidgin" (className =? "Pidgin")        ( customFloating lowerRightRect )
     , NS "anki" "anki" (className =? "Anki")              ( customFloating centeredRect )
     , NS "spotify" "spotify" (className =? "Spotify")     ( customFloating centeredRect )
@@ -223,13 +225,14 @@ lowerRightRect = W.RationalRect (1/2) (1/2) (fullWidth / 2) (fullHeight / 2)
 
 -- explicit list of tags
 tags :: [Tag]
-tags = [ 'b' -- project-related documentation (auto-assigned to vimb)
+tags = [ 'b' -- browsers
        , 'e' -- editor / emacs (auto-assigned to emacs instances)
        , 'd' -- documentation of any kind: zathura, apvlv, ...
        , 'v' -- vim instance
        , 'x' -- assign freely, 'extended'
        , 'i' -- IDEs: idea, eclipse
-       , 'u' -- urxvt
+       , 'u' -- urxvt / terminals
+       , 'm' -- assigned to known messengers
        ]
 
 keyToCode :: M.Map Char KeySym
@@ -342,10 +345,8 @@ myMainKeys =
   [ ( (myModMask,               xK_a),         mySubmap appSubmap)
   , ( (myModMask,               xK_z),         mySubmap promptSubmap)
   , ( (myModMask,               xK_w),         mySubmap windowSubmap)
-  , ( (myModMask,               xK_r),         toggleWSSkipSide ["NSP"])
+  , ( (myModMask,               xK_r),         toggleWSSkipSide ["NSP", "_"])
   , ( (myModMask,               xK_s),         nextScreen)
-  , ( (myModMask,               xK_m),         namedScratchpadAction scratchpads "_mail")
-  , ( (myModMask,               xK_c),         namedScratchpadAction scratchpads "qutebrowser")
   , ( (myAltMask,               xK_c),         namedScratchpadAction scratchpads "firefox")
   , ( (myShiftMask,             xK_c),         namedScratchpadAction scratchpads "chromium")
   , ( (myModMask,               xK_q),         namedScratchpadAction scratchpads "hud")
@@ -408,9 +409,6 @@ myBaseKeys conf = myMainKeys ++
 
   , ( (myAltMask,   xK_v), namedScratchpadAction scratchpads "pavucontrol")
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "anki")
-  , ( (myShiftMask, xK_y), namedScratchpadAction scratchpads "pidgin")
-  , ( (myAltMask,   xK_y), namedScratchpadAction scratchpads "franz")
-  , ( (myControlMask, xK_y), namedScratchpadAction scratchpads "slack")
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
   , ( (myModMask,     xK_BackSpace), toggleSideWorkspace)
