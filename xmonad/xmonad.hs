@@ -33,6 +33,8 @@ import           XMonad.Actions.TagWindows           (addTag, delTag,
 import           XMonad.Actions.UpdatePointer        (updatePointer)
 import           XMonad.Actions.WindowGo             (ifWindow, raiseMaybe)
 
+
+import           XMonad.Hooks.EwmhDesktops           (ewmh)
 import           XMonad.Hooks.ManageHelpers          (doRectFloat)
 import           XMonad.Hooks.SetWMName              (setWMName)
 import           XMonad.Hooks.UrgencyHook            (UrgencyHook(..), focusUrgent, withUrgencyHook)
@@ -252,7 +254,7 @@ workspaceMask       = myModMask
 main :: IO ()
 main = do
   ps <- projects
-  xmonad $ withUrgencyHook LibNotifyUrgencyHook $ dynamicProjects ps def
+  xmonad $ ewmh $ withUrgencyHook LibNotifyUrgencyHook $ dynamicProjects ps def
     { borderWidth        = 1
     , modMask            = myModMask
     , terminal           = myTerminal
