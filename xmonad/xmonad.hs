@@ -8,7 +8,6 @@ import           Data.List                           (isPrefixOf, isSuffixOf, is
 import qualified Data.Map                            as M
 import           Data.Maybe                          (fromMaybe)
 
-import           XMonad
 import qualified XMonad.StackSet                     as W
 
 import           XMonad.Actions.CycleWS              (nextScreen,
@@ -73,6 +72,11 @@ import           PiMonad.Workspaces                  (getMainWorkspace,
                                                       projectFile, projects,
                                                       shiftToOtherWorkspace,
                                                       toggleSideWorkspace)
+import XMonad.Layout.TallMastersCombo
+import XMonad hiding ((|||))
+import XMonad.Layout hiding ((|||))
+import XMonad.Layout.TabBarDecoration (simpleTabBar, tabBar, XPPosition ( Top ) )
+import XMonad.Layout.Reflect (reflectHoriz)
 
 type Tag = Char
 
@@ -243,7 +247,7 @@ tags = [ 'b' -- browsers
 keyToCode :: M.Map Char KeySym
 keyToCode = M.fromList $ zip (['a' .. 'z'] ++ ['0' .. '9']) ([xK_a .. xK_z] ++ [xK_0 .. xK_9])
 
-resizeStepSize :: Dimension
+resizeStepSize :: Int
 resizeStepSize = 120
 
 myModMask, myShiftMask, myControlMask, myAltMask, tagToggleMask, workspaceMask :: ButtonMask
@@ -271,22 +275,33 @@ main = do
     , focusedBorderColor = "#cd8b00" }
 
 myLayoutHook = noBorders
+               . addTopBar
                . windowNavigation
                . trackFloating
                . useTransientFor
-               . addTopBar
-               . addTabs shrinkText myTabTheme
-               . XS.spacingRaw True (XS.Border 5 5 5 5) True (XS.Border 5 5 5 5) True
                . mkToggle (FULL ?? MIRROR ?? EOT)
-               $ subs ||| threeCol
+               $ reflectHoriz tallCombined -- ||| subs ||| threeCol
   where
-    subs          = subLayout [] innerLayout $ boringWindows outerLayout
+    -- top; bottom; right; left
+    screenBorders = XS.Border 15 15 10 10
+
+    -- tabSpacing; no additional spaces, otherwise gaps to the tab bar itself
+    tabSpacing = XS.spacingRaw False (screenBorders) True (XS.Border 0 0 0 0) True
+
+    -- winSpacing: space between windows (and at bottom of last window, unfortunately)
+    winSpacing = XS.spacingRaw False (screenBorders) True (XS.Border 0 10 0 0) True
+
+    -- vsplit? -> num master -> resize fraction -> master ratio -> layout1 -> layout 2
+    -- subLayout = RowsOrColumns True ||| tabbed myTabTheme
+    subLayout     = tabSpacing (tabbed shrinkText myTabTheme) ||| winSpacing (RowsOrColumns True)
+    tallCombined  = tmsCombineTwo True nmaster resizeDelta masterRatio subLayout subLayout
+    -- subs          = subLayout [] innerLayout $ boringWindows outerLayout
     tabs          = Simplest
-    threeCol      = ThreeColMid 1 (3/100) (1/2)
+    -- threeCol      = ThreeColMid 1 (3/100) (1/2)
     addTopBar     = noFrillsDeco shrinkText topBarTheme
-    tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
-    outerLayout   = tallLayout
-    innerLayout   = Simplest ||| Accordion
+    -- tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
+    -- outerLayout   = tallLayout
+    -- innerLayout   = Simplest ||| Accordion
     nmaster       = 1
     resizeDelta   = 5/100
     masterRatio   = 3/6
@@ -294,7 +309,7 @@ myLayoutHook = noBorders
     -- second entry are identical, a third window will have size 0.
     -- the current setting makes the second window twice the size of the third (if there
     -- are only three)
-    slaveRatios   = [1.6, 1.3]
+    -- slaveRatios   = [1.6, 1.3]
 
 -- submap to trigger / start applications
 appSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
@@ -328,10 +343,13 @@ windowSubmap = M.fromList
   [ ( (0, xK_s),         withFocused $ windows . W.sink)
   , ( (shiftMask, xK_s), sinkAll)
   , ( (0, xK_f),         withFocused float)
-  , ( (0, xK_l),         sendMessage NextLayout)
-  , ( (0, xK_i),         toSubl NextLayout)
+  , ( (0, xK_l),         sendMessage FocusedNextLayout)
+  -- , ( (0, xK_i),         toSubl NextLayout)
+  , ( (0, xK_i),         sendMessage $ IncMasterN 1)
+  , ( (0, xK_d),         sendMessage . IncMasterN $ -1)
   , ( (0, xK_k),         kill)
-  , ( (0, xK_slash),     sendMessage $ Toggle MIRROR)
+  -- improves over `Toggle MIRROR` by placing tabs at the top on mirror
+  , ( (0, xK_slash),     sendMessage $ SwitchOrientation )
   ]
 
 mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
