@@ -278,7 +278,7 @@ myLayoutHook = noBorders
                . addTabs shrinkText myTabTheme
                . XS.spacingRaw True (XS.Border 5 5 5 5) True (XS.Border 5 5 5 5) True
                . mkToggle (FULL ?? MIRROR ?? EOT)
-               $ threeCol ||| subs
+               $ subs ||| threeCol
   where
     subs          = subLayout [] innerLayout $ boringWindows outerLayout
     tabs          = Simplest
