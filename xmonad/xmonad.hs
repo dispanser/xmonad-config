@@ -43,6 +43,7 @@ import           XMonad.Hooks.UrgencyHook            (UrgencyHook(..), focusUrge
 
 import           XMonad.Layout.Accordion             (Accordion (..))
 import           XMonad.Layout.BoringWindows         (boringWindows)
+import           XMonad.Layout.Cross
 import           XMonad.Layout.Decoration
 import           XMonad.Layout.MultiToggle
 import           XMonad.Layout.MultiToggle.Instances
@@ -55,6 +56,7 @@ import           XMonad.Layout.SubLayouts            (GroupMsg (..), onGroup,
                                                       pullGroup, subLayout,
                                                       toSubl)
 import           XMonad.Layout.Tabbed
+import           XMonad.Layout.ThreeColumns          (ThreeCol (ThreeColMid) )
 import           XMonad.Layout.WindowNavigation
 
 import           XMonad.Util.NamedWindows            (getName)
@@ -116,7 +118,7 @@ myManageHook = namedScratchpadManageHook scratchpads
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
   , title `startsWith` "Slack"                    --> addTagHook "m"
   , title `startsWith` "Signal"                   --> addTagHook "m"
-  , className =?           "Franz"                --> addTagHook "m"
+  , className =?           "Franz"                --> addTagHook "m" >> doRectFloat centeredRect
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
   , className =?           "Vimb"                 --> addTagHook "b"
   , className =?           "Firefox"              --> addTagHook "b"
@@ -124,11 +126,12 @@ myManageHook = namedScratchpadManageHook scratchpads
   , className =?           "qutebrowser"          --> addTagHook "b"             >>     doRectFloat leftBarRect
   , className =?           "Emacs"                --> addTagHook "e"
   , className =?           "Gvim"                 --> addTagHook "v"
-  , className =?           "Apvlv"                --> addTagHook "d"
-  , className =?           "Zathura"              --> addTagHook "d"
+  , className =?           "Apvlv"                --> addTagHook "v"
+  , className =?           "Zathura"              --> addTagHook "v"
   , className =?           "jetbrains-idea-ce"    --> addTagHook "i"
   , className =?           "R_x11"                --> addTagHook "i"
   , className =?           "URxvt"                --> addTagHook "u"
+  , className =?           "Alacritty"            --> addTagHook "u"
   , className =?           "Spotify"              --> doRectFloat rightBarRect
   , role      =?           "browser-edit"         --> doRectFloat lowerRightRect
   , appName   =?           "browser-edit"         --> doRectFloat lowerRightRect
@@ -152,6 +155,7 @@ scratchpads =
     , tmuxScratchpad "hud"                                ( customFloating upperBarRect )
     , tmuxScratchpad "config"                             ( customFloating leftBarRect )
     , NS "pavucontrol" "pavucontrol" (className =? "Pavucontrol") ( customFloating centeredRect )
+    , NS "obsidian" "obsidian" (className =? "obsidian") ( customFloating centeredRect )
     , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
     , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
@@ -229,8 +233,7 @@ lowerRightRect = W.RationalRect (1/2) (1/2) (fullWidth / 2) (fullHeight / 2)
 tags :: [Tag]
 tags = [ 'b' -- browsers
        , 'e' -- editor / emacs (auto-assigned to emacs instances)
-       , 'd' -- documentation of any kind: zathura, apvlv, ...
-       , 'v' -- vim instance
+       , 'v' -- vim instance, pdf / document readers (d is already in use elsewhere)
        , 'x' -- assign freely, 'extended'
        , 'i' -- IDEs: idea, eclipse
        , 'u' -- urxvt / terminals
@@ -275,13 +278,14 @@ myLayoutHook = noBorders
                . addTabs shrinkText myTabTheme
                . XS.spacingRaw True (XS.Border 5 5 5 5) True (XS.Border 5 5 5 5) True
                . mkToggle (FULL ?? MIRROR ?? EOT)
-               $ tabs ||| subs
+               $ threeCol ||| subs
   where
     subs          = subLayout [] innerLayout $ boringWindows outerLayout
     tabs          = Simplest
+    threeCol      = ThreeColMid 1 (3/100) (1/2)
     addTopBar     = noFrillsDeco shrinkText topBarTheme
     tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
-    outerLayout   = tallLayout ||| Accordion
+    outerLayout   = tallLayout
     innerLayout   = Simplest ||| Accordion
     nmaster       = 1
     resizeDelta   = 5/100
@@ -353,10 +357,11 @@ myMainKeys =
   , ( (myShiftMask,             xK_c),         namedScratchpadAction scratchpads "chromium")
   , ( (myModMask,               xK_q),         namedScratchpadAction scratchpads "hud")
   , ( (myShiftMask,             xK_q),         namedScratchpadAction scratchpads "config")
-  , ( (myModMask,               xK_g),         localEmacsClient "master.org"  "org" "org-mode")
+  -- , ( (myModMask,               xK_g),         localEmacsClient "master.org"  "org" "org-mode")
   , ( (myModMask,               xK_backslash), localEmacsClient "scratch.org" "scratch" "org-mode")
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
   , ( (myModMask,               xK_t),         runOrRaiseLocal "term")
+  , ( (myShiftMask,             xK_t),         runOrRaiseLocal "term" >> promote)
   , ( (myModMask,               xK_slash),     focusUrgent)
 
   -- SubLayout: iterate inside a single group
@@ -389,6 +394,7 @@ myMainKeys =
   -- but doesn't have to be registered at startup.
   , ( (myModMask,               xK_o),         localTmux "overlay")
   , ( (myModMask,               xK_semicolon), S.projectBrowser)
+  , ( (myShiftMask,             xK_semicolon), S.projectBrowser >> promote)
   , ( (myModMask,               xK_F5),        spawn "/home/pi/bin/btk.sh")
   , ( (myModMask,               xK_F7),        spawn "xmodmap /home/pi/.Xmodmap")
   , ( (myModMask,               xK_F11),       spawn "xlock -mode blank")
@@ -411,6 +417,7 @@ myBaseKeys conf = myMainKeys ++
 
   , ( (myAltMask,   xK_v), namedScratchpadAction scratchpads "pavucontrol")
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "anki")
+  , ( (myModMask,   xK_g), namedScratchpadAction scratchpads "obsidian")
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
   , ( (myModMask,     xK_BackSpace), toggleSideWorkspace)
@@ -447,7 +454,8 @@ myKeys conf = M.fromList $
 
 tagControl :: [( ButtonMask, String -> X () )]
 tagControl = [ ( myModMask,     focusUpTagged )
-             , ( tagToggleMask, withFocused . toggleTag ) ]
+             , ( tagToggleMask, withFocused . toggleTag )
+             , ( myShiftMask,   \tag -> focusUpTagged tag >> promote) ]
 
 buildTagKeys :: [Tag] -> [(( ButtonMask, KeySym ), X () )]
 buildTagKeys tagKeys =

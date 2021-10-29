@@ -13,33 +13,39 @@ import           XMonad
 import           XMonad.Actions.DynamicProjects (Project (..), currentProject)
 import           XMonad.Actions.WindowGo        (ifWindow)
 import qualified XMonad.StackSet                as W
+import qualified Debug.Trace                    as DT
 
 -- | create a scratchpad given a function that expects the tag suffix as a @String@
 --   and produces the command to be executed, and the local window type that is
 --   a part of the globally valid local tag name
 localScratch :: (String -> String) -> String -> X ()
 localScratch cmdF suffix = withWindowSet $ \ws -> do
-  let tag       =  W.currentTag ws
-  let focused   =  W.peek ws
-  let localName =  getMainWorkspace tag ++ "_" ++ suffix
-  let command   = cmdF localName
+  let tag         = W.currentTag ws
+  let focused     = W.peek ws
+  let localName   = DT.traceShowId $ getMainWorkspace tag ++ "_" ++ suffix
+  let command     = cmdF localName
+  let windowQuery = fromScratchOrFocus (appName =? localName) tag command
   case focused of
     Just w -> do
       an <- runQuery appName w
       if an == localName
         then toScratch
-        else fromScratchOrFocus (appName =? localName) tag command
-    Nothing -> fromScratchOrFocus (appName =? localName) tag command
+        else windowQuery
+    Nothing -> windowQuery
 
 -- this looks suspicibly similar to the localScratch above
 -- TODO: investigate
+-- - projectScratch expects a function that, given a project,
+--   creates a command (string) and a query; the other one
+--   expects a function that produces a command from a string
+-- -
 
 projectScratch :: ( Project -> (String, Query Bool) ) -> X ()
 projectScratch cmdF = withWindowSet $ \ws -> do
   pr <- currentProject
   let (command, query) = cmdF pr
   let focused = W.peek ws
-  let windowQuery = ifWindow query (showOrBring $ W.currentTag ws) (spawn command)
+  let windowQuery = fromScratchOrFocus query (W.currentTag ws) command
   case focused of
     Just w -> do
       matches <- runQuery query w
