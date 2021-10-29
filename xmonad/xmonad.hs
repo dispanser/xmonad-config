@@ -243,7 +243,7 @@ tags = [ 'b' -- browsers
 keyToCode :: M.Map Char KeySym
 keyToCode = M.fromList $ zip (['a' .. 'z'] ++ ['0' .. '9']) ([xK_a .. xK_z] ++ [xK_0 .. xK_9])
 
-resizeStepSize :: Dimension
+resizeStepSize :: Int
 resizeStepSize = 120
 
 myModMask, myShiftMask, myControlMask, myAltMask, tagToggleMask, workspaceMask :: ButtonMask
