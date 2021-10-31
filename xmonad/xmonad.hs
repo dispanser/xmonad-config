@@ -1,3 +1,6 @@
+import qualified XMonad.Layout.Groups                as G
+import qualified XMonad.Layout.Groups.Helpers        as GH
+import qualified XMonad.Layout.Groups.Examples       as GE
 import           XMonad.Prompt                       (XPConfig(..), XPPosition(CenteredAt),
                                                      defaultXPKeymap')
 import qualified XMonad.Prompt.Pass                  as XP
@@ -16,7 +19,6 @@ import           XMonad.Actions.CycleWS              (nextScreen,
                                                       toggleWS')
 import           XMonad.Actions.DynamicProjects      (changeProjectDirPrompt,
                                                       dynamicProjects,
-                                                      shiftToProject,
                                                       shiftToProjectPrompt,
                                                       switchProjectPrompt)
 import           XMonad.Actions.FloatKeys            (keysResizeWindow)
@@ -270,31 +272,50 @@ main = do
     , normalBorderColor  = "#cccccc"
     , focusedBorderColor = "#cd8b00" }
 
-myLayoutHook = noBorders
-               . windowNavigation
-               . trackFloating
-               . useTransientFor
-               . addTopBar
-               . addTabs shrinkText myTabTheme
-               . XS.spacingRaw True (XS.Border 5 5 5 5) True (XS.Border 5 5 5 5) True
-               . mkToggle (FULL ?? MIRROR ?? EOT)
-               $ subs ||| threeCol
+myLayoutHook =
+    noBorders
+    . windowNavigation
+    -- . trackFloating
+    -- . useTransientFor
+    . addTopBar
+    . addTabs shrinkText myTabTheme
+    . XS.spacingRaw True (XS.Border 5 5 5 5) True (XS.Border 5 5 5 5) True
+    -- . mkToggle (FULL ?? MIRROR ?? EOT)
+    $ groupLayout
+
   where
-    subs          = subLayout [] innerLayout $ boringWindows outerLayout
-    tabs          = Simplest
+    groupLayout = (G.group innerLayout outerLayout) ||| threeCol
+    innerLayout = Simplest  ||| Accordion
+    tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
+    -- tallLayout    = Tall nmaster resizeDelta masterRatio
+    -- subs          = subLayout [] innerLayout $ boringWindows outerLayout
     threeCol      = ThreeColMid 1 (3/100) (1/2)
     addTopBar     = noFrillsDeco shrinkText topBarTheme
-    tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
     outerLayout   = tallLayout
-    innerLayout   = Simplest ||| Accordion
     nmaster       = 1
     resizeDelta   = 5/100
     masterRatio   = 3/6
-    -- the ratios seem to contain the master window in the computation. if first and
-    -- second entry are identical, a third window will have size 0.
-    -- the current setting makes the second window twice the size of the third (if there
-    -- are only three)
+    -- -- the ratios seem to contain the master window in the computation. if first and
+    -- -- second entry are identical, a third window will have size 0.
+    -- -- the current setting makes the second window twice the size of the third (if there
+    -- -- are only three)
     slaveRatios   = [1.6, 1.3]
+
+-- submaps for less common window operations
+windowSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
+windowSubmap = M.fromList
+  [ ( (0, xK_s),         withFocused $ windows . W.sink)
+  , ( (shiftMask, xK_s), sinkAll)
+  , ( (0, xK_f),         withFocused float)
+  , ( (0, xK_l),         sendMessage NextLayout)
+  , ( (shiftMask, xK_l), sendMessage $ G.ToFocused $ SomeMessage NextLayout)
+  -- , ( (shiftMask, xK_l), toSubl NextLayout)
+  , ( (0, xK_g),         sendMessage $ G.Modify G.splitGroup)
+  , ( (0, xK_i),         sendMessage $ IncMasterN 1)
+  , ( (0, xK_d),         sendMessage . IncMasterN $ -1)
+  , ( (0, xK_k),         kill)
+  , ( (0, xK_slash),     sendMessage $ Toggle MIRROR)
+  ]
 
 -- submap to trigger / start applications
 appSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
