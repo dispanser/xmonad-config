@@ -280,7 +280,7 @@ myLayoutHook =
     . addTopBar
     . addTabs shrinkText myTabTheme
     . XS.spacingRaw True (XS.Border 5 5 5 5) True (XS.Border 5 5 5 5) True
-    -- . mkToggle (FULL ?? MIRROR ?? EOT)
+    . mkToggle (FULL ?? MIRROR ?? EOT)
     $ groupLayout
 
   where
@@ -343,18 +343,6 @@ promptSubmap = M.fromList
   , ( (shiftMask, xK_p), XP.passPrompt myPromptConfig)
   ]
 
--- submaps for less common window operations
-windowSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
-windowSubmap = M.fromList
-  [ ( (0, xK_s),         withFocused $ windows . W.sink)
-  , ( (shiftMask, xK_s), sinkAll)
-  , ( (0, xK_f),         withFocused float)
-  , ( (0, xK_l),         sendMessage NextLayout)
-  , ( (0, xK_i),         toSubl NextLayout)
-  , ( (0, xK_k),         kill)
-  , ( (0, xK_slash),     sendMessage $ Toggle MIRROR)
-  ]
-
 mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
 -- mySubmap = resubmapDefaultWithKey $ (\k -> xmessage ("huhu, unexpected key: " ++ (show $ snd k) ) )
 mySubmap = submap
@@ -385,10 +373,6 @@ myMainKeys =
   , ( (myShiftMask,             xK_t),         runOrRaiseLocal "term" >> promote)
   , ( (myModMask,               xK_slash),     focusUrgent)
 
-  -- SubLayout: iterate inside a single group
-  , ( (myModMask,               xK_period),    onGroup W.focusDown')
-  , ( (myModMask,               xK_comma),     onGroup W.focusUp')
-
   -- SubLayout: go / swap in the four directions
   , ( (myModMask,               xK_l),         sendMessage $ Go R)
   , ( (myModMask,               xK_h),         sendMessage $ Go L)
@@ -396,8 +380,8 @@ myMainKeys =
   , ( (myModMask,               xK_j),         sendMessage $ Go D)
   , ( (myShiftMask,             xK_l),         sendMessage $ Swap R)
   , ( (myShiftMask,             xK_h),         sendMessage $ Swap L)
-  , ( (myShiftMask,             xK_k),         sendMessage $ Swap U)
-  , ( (myShiftMask,             xK_j),         sendMessage $ Swap D)
+  , ( (myShiftMask,             xK_k),         sendMessage $ G.Modify $ G.moveToGroupUp False)
+  , ( (myShiftMask,             xK_j),         sendMessage $ G.Modify $ G.moveToGroupDown False)
   , ( (myControlMask,           xK_h),         sendMessage Shrink)
   , ( (myControlMask,           xK_l),         sendMessage Expand)
   , ( (myControlMask,           xK_j),         sendMessage MirrorShrink)
@@ -426,15 +410,23 @@ myMainKeys =
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
 myBaseKeys conf = myMainKeys ++
-  [ ( (myModMask,   xK_Return), promote)
-  , ( (myShiftMask, xK_Return), windows W.focusMaster)
+  -- managing groups: next, previous, shift windows between, promote group go master
+  [ ( (myModMask,   xK_Return), GH.focusGroupMaster)
+  , ( (myShiftMask, xK_Return), GH.swapGroupMaster)
+  , ( (myModMask,   xK_n),      GH.focusGroupDown)
+  , ( (myModMask,   xK_p),      GH.focusGroupUp)
+  , ( (myShiftMask, xK_n),      GH.moveToGroupDown False)
+  , ( (myShiftMask, xK_p),      GH.moveToGroupUp False)
+  , ( (myAltMask,   xK_n),      GH.swapGroupDown)
+  , ( (myAltMask,   xK_p),      GH.swapGroupUp)
 
-  -- basic window switch via mod-{n,p}. Mix in shift to not bring front
-  , ( (myShiftMask, xK_Return), promote)
-  , ( (myShiftMask, xK_n),      windows W.swapDown)
-  , ( (myShiftMask, xK_p),      windows W.swapUp)
-  , ( (myModMask,   xK_n),      windows W.focusDown)
-  , ( (myModMask,   xK_p),      windows W.focusUp)
+  -- only works _inside_ a group, which is what I want but unexpected :)
+  , ( (myModMask,   xK_period), GH.focusDown)
+  , ( (myModMask,   xK_comma),  GH.focusUp)
+
+  -- TODO: no visible effect
+  , ( (myShiftMask, xK_period), GH.swapDown)
+  , ( (myShiftMask, xK_comma),  GH.swapUp)
 
   , ( (myAltMask,   xK_v), namedScratchpadAction scratchpads "pavucontrol")
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "anki")
