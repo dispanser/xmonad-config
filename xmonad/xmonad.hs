@@ -355,6 +355,10 @@ toggleWSSkipSide ignores = do
   let otherWS =  getOtherWorkspace workspace
   toggleWS' $ otherWS:ignores
 
+outerAction :: Message a => a -> X ()
+outerAction = sendMessage . G.ToEnclosing . SomeMessage
+-- sendMessage $ G.ToFocused $ SomeMessage NextLayout
+
 myMainKeys :: [(( ButtonMask, KeySym ), X () )]
 myMainKeys =
   [ ( (myModMask,               xK_a),         mySubmap appSubmap)
@@ -382,10 +386,10 @@ myMainKeys =
   , ( (myShiftMask,             xK_h),         sendMessage $ Swap L)
   , ( (myShiftMask,             xK_k),         sendMessage $ G.Modify $ G.moveToGroupUp False)
   , ( (myShiftMask,             xK_j),         sendMessage $ G.Modify $ G.moveToGroupDown False)
-  , ( (myControlMask,           xK_h),         sendMessage Shrink)
-  , ( (myControlMask,           xK_l),         sendMessage Expand)
-  , ( (myControlMask,           xK_j),         sendMessage MirrorShrink)
-  , ( (myControlMask,           xK_k),         sendMessage MirrorExpand)
+  , ( (myControlMask,           xK_h),         outerAction Shrink)
+  , ( (myControlMask,           xK_l),         outerAction Expand)
+  , ( (myControlMask,           xK_j),         outerAction MirrorShrink)
+  , ( (myControlMask,           xK_k),         outerAction MirrorExpand)
 
   -- SubLayout: merge windows, explode
   , ( (myAltMask,               xK_BackSpace), sendMessage $ pullGroup L)
@@ -411,6 +415,7 @@ myMainKeys =
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
 myBaseKeys conf = myMainKeys ++
   -- managing groups: next, previous, shift windows between, promote group go master
+  -- note that these group-specific actions don't work with non-grouped outer layouts
   [ ( (myModMask,   xK_Return), GH.focusGroupMaster)
   , ( (myShiftMask, xK_Return), GH.swapGroupMaster)
   , ( (myModMask,   xK_n),      GH.focusGroupDown)
@@ -421,6 +426,7 @@ myBaseKeys conf = myMainKeys ++
   , ( (myAltMask,   xK_p),      GH.swapGroupUp)
 
   -- only works _inside_ a group, which is what I want but unexpected :)
+  -- this is also the way to navigate when in a layout that's not a group
   , ( (myModMask,   xK_period), GH.focusDown)
   , ( (myModMask,   xK_comma),  GH.focusUp)
 
