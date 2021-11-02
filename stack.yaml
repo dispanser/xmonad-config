@@ -12,6 +12,6 @@ extra-package-dbs: []
 
 # allow-newer: true
 nix:
-    enable: true
+    enable: false
     # pure: false
     packages: [ xorg.libX11, xorg.libXrandr, xorg.libXext, pkgconfig, xorg.libXft ]

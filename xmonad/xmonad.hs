@@ -279,7 +279,7 @@ myLayoutHook =
     -- . useTransientFor
     . addTopBar
     . addTabs shrinkText myTabTheme
-    . XS.spacingRaw True (XS.Border 5 5 5 5) True (XS.Border 5 5 5 5) True
+    . XS.spacingRaw True (XS.Border 10 10 10 10) True (XS.Border 10 10 10 10) True
     . mkToggle (FULL ?? MIRROR ?? EOT)
     $ groupLayout
 
@@ -417,7 +417,7 @@ myBaseKeys conf = myMainKeys ++
   -- managing groups: next, previous, shift windows between, promote group go master
   -- note that these group-specific actions don't work with non-grouped outer layouts
   [ ( (myModMask,   xK_Return), GH.focusGroupMaster)
-  , ( (myShiftMask, xK_Return), GH.swapGroupMaster)
+  , ( (myAltMask,   xK_Return), GH.swapGroupMaster)
   , ( (myModMask,   xK_n),      GH.focusGroupDown)
   , ( (myModMask,   xK_p),      GH.focusGroupUp)
   , ( (myShiftMask, xK_n),      GH.moveToGroupDown False)
