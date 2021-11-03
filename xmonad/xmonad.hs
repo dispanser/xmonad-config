@@ -120,6 +120,7 @@ myManageHook = namedScratchpadManageHook scratchpads
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
   , title `startsWith` "Slack"                    --> addTagHook "m"
   , title `startsWith` "Signal"                   --> addTagHook "m"
+  , className =?           "TelegramDesktop"      --> addTagHook "m"
   , className =?           "Franz"                --> addTagHook "m" >> doRectFloat centeredRect
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
   , className =?           "Vimb"                 --> addTagHook "b"
