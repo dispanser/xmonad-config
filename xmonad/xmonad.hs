@@ -118,12 +118,11 @@ myManageHook = namedScratchpadManageHook scratchpads
   , appName   `endsWith`   "_org"                 --> doRectFloat centeredRect
   -- title: WM_NAME / _NET_WM_NAME
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
-  , title     `startsWith` "Slack"                --> addTagHook "m"
-  , title     `startsWith` "Signal"               --> addTagHook "m"
-  , className =?           "threema-web"          --> addTagHook "m"
+  , title `startsWith` "Slack"                    --> addTagHook "m"
+  , title `startsWith` "Signal"                   --> addTagHook "m"
   , className =?           "TelegramDesktop"      --> addTagHook "m"
   , className =?           "Franz"                --> addTagHook "m" >> doRectFloat centeredRect
-  , className =?           "Pinentry"             --> doRectFloat smallCentered
+  , className  =?          "Pinentry"             --> doRectFloat smallCentered
   , className =?           "Vimb"                 --> addTagHook "b"
   , className =?           "Firefox"              --> addTagHook "b"
   , className `startsWith` "Chromium"             --> addTagHook "b"
@@ -289,16 +288,18 @@ myLayoutHook =
     groupLayout = (G.group innerLayout outerLayout) ||| threeCol
     innerLayout = Simplest  ||| Accordion
     tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
+    -- tallLayout    = Tall nmaster resizeDelta masterRatio
+    -- subs          = subLayout [] innerLayout $ boringWindows outerLayout
     threeCol      = ThreeColMid 1 (3/100) (1/2)
     addTopBar     = noFrillsDeco shrinkText topBarTheme
     outerLayout   = tallLayout
     nmaster       = 1
     resizeDelta   = 5/100
     masterRatio   = 3/6
-    -- the ratios seem to contain the master window in the computation. if first and
-    -- second entry are identical, a third window will have size 0.
-    -- the current setting makes the second window twice the size of the third (if there
-    -- are only three)
+    -- -- the ratios seem to contain the master window in the computation. if first and
+    -- -- second entry are identical, a third window will have size 0.
+    -- -- the current setting makes the second window twice the size of the third (if there
+    -- -- are only three)
     slaveRatios   = [1.6, 1.3]
 
 -- submaps for less common window operations
