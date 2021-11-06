@@ -289,18 +289,16 @@ myLayoutHook =
     groupLayout = (G.group innerLayout outerLayout) ||| threeCol
     innerLayout = Simplest  ||| Accordion
     tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
-    -- tallLayout    = Tall nmaster resizeDelta masterRatio
-    -- subs          = subLayout [] innerLayout $ boringWindows outerLayout
     threeCol      = ThreeColMid 1 (3/100) (1/2)
     addTopBar     = noFrillsDeco shrinkText topBarTheme
     outerLayout   = tallLayout
     nmaster       = 1
     resizeDelta   = 5/100
     masterRatio   = 3/6
-    -- -- the ratios seem to contain the master window in the computation. if first and
-    -- -- second entry are identical, a third window will have size 0.
-    -- -- the current setting makes the second window twice the size of the third (if there
-    -- -- are only three)
+    -- the ratios seem to contain the master window in the computation. if first and
+    -- second entry are identical, a third window will have size 0.
+    -- the current setting makes the second window twice the size of the third (if there
+    -- are only three)
     slaveRatios   = [1.6, 1.3]
 
 -- submaps for less common window operations
