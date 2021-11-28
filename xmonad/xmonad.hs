@@ -1,3 +1,6 @@
+import qualified XMonad.Layout.Groups                as G
+import qualified XMonad.Layout.Groups.Helpers        as GH
+import qualified XMonad.Layout.Groups.Examples       as GE
 import           XMonad.Prompt                       (XPConfig(..), XPPosition(CenteredAt),
                                                      defaultXPKeymap')
 import qualified XMonad.Prompt.Pass                  as XP
@@ -16,7 +19,6 @@ import           XMonad.Actions.CycleWS              (nextScreen,
                                                       toggleWS')
 import           XMonad.Actions.DynamicProjects      (changeProjectDirPrompt,
                                                       dynamicProjects,
-                                                      shiftToProject,
                                                       shiftToProjectPrompt,
                                                       switchProjectPrompt)
 import           XMonad.Actions.FloatKeys            (keysResizeWindow)
@@ -65,7 +67,7 @@ import           XMonad.Util.NamedScratchpad         (NamedScratchpad (..),
                                                       namedScratchpadAction,
                                                       namedScratchpadManageHook)
 import           XMonad.Util.Run                     (safeSpawn)
-import           Debug.TrackFloating                 (trackFloating,
+import           XMonad.Layout.TrackFloating         (trackFloating,
                                                       useTransientFor)
 import qualified PiMonad.Scratches                   as S
 import           PiMonad.Workspaces                  (getMainWorkspace,
@@ -118,6 +120,7 @@ myManageHook = namedScratchpadManageHook scratchpads
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
   , title `startsWith` "Slack"                    --> addTagHook "m"
   , title `startsWith` "Signal"                   --> addTagHook "m"
+  , className =?           "TelegramDesktop"      --> addTagHook "m"
   , className =?           "Franz"                --> addTagHook "m" >> doRectFloat centeredRect
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
   , className =?           "Vimb"                 --> addTagHook "b"
@@ -246,7 +249,7 @@ tags = [ 'b' -- browsers
 keyToCode :: M.Map Char KeySym
 keyToCode = M.fromList $ zip (['a' .. 'z'] ++ ['0' .. '9']) ([xK_a .. xK_z] ++ [xK_0 .. xK_9])
 
-resizeStepSize :: Int
+resizeStepSize :: Dimension
 resizeStepSize = 120
 
 myModMask, myShiftMask, myControlMask, myAltMask, tagToggleMask, workspaceMask :: ButtonMask
@@ -273,31 +276,50 @@ main = do
     , normalBorderColor  = "#cccccc"
     , focusedBorderColor = "#cd8b00" }
 
-myLayoutHook = noBorders
-               . windowNavigation
-               . trackFloating
-               . useTransientFor
-               . addTopBar
-               . addTabs shrinkText myTabTheme
-               . XS.spacingRaw True (XS.Border 5 5 5 5) True (XS.Border 5 5 5 5) True
-               . mkToggle (FULL ?? MIRROR ?? EOT)
-               $ subs ||| threeCol
+myLayoutHook =
+    noBorders
+    . windowNavigation
+    -- . trackFloating
+    -- . useTransientFor
+    . addTopBar
+    . addTabs shrinkText myTabTheme
+    . XS.spacingRaw True (XS.Border 10 10 10 10) True (XS.Border 10 10 10 10) True
+    . mkToggle (FULL ?? MIRROR ?? EOT)
+    $ groupLayout
+
   where
-    subs          = subLayout [] innerLayout $ boringWindows outerLayout
-    tabs          = Simplest
+    groupLayout = (G.group innerLayout outerLayout) ||| threeCol
+    innerLayout = Simplest  ||| Accordion
+    tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
+    -- tallLayout    = Tall nmaster resizeDelta masterRatio
+    -- subs          = subLayout [] innerLayout $ boringWindows outerLayout
     threeCol      = ThreeColMid 1 (3/100) (1/2)
     addTopBar     = noFrillsDeco shrinkText topBarTheme
-    tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
     outerLayout   = tallLayout
-    innerLayout   = Simplest ||| Accordion
     nmaster       = 1
     resizeDelta   = 5/100
     masterRatio   = 3/6
-    -- the ratios seem to contain the master window in the computation. if first and
-    -- second entry are identical, a third window will have size 0.
-    -- the current setting makes the second window twice the size of the third (if there
-    -- are only three)
+    -- -- the ratios seem to contain the master window in the computation. if first and
+    -- -- second entry are identical, a third window will have size 0.
+    -- -- the current setting makes the second window twice the size of the third (if there
+    -- -- are only three)
     slaveRatios   = [1.6, 1.3]
+
+-- submaps for less common window operations
+windowSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
+windowSubmap = M.fromList
+  [ ( (0, xK_s),         withFocused $ windows . W.sink)
+  , ( (shiftMask, xK_s), sinkAll)
+  , ( (0, xK_f),         withFocused float)
+  , ( (0, xK_l),         sendMessage NextLayout)
+  , ( (shiftMask, xK_l), sendMessage $ G.ToFocused $ SomeMessage NextLayout)
+  -- , ( (shiftMask, xK_l), toSubl NextLayout)
+  , ( (0, xK_g),         sendMessage $ G.Modify G.splitGroup)
+  , ( (0, xK_i),         sendMessage $ IncMasterN 1)
+  , ( (0, xK_d),         sendMessage . IncMasterN $ -1)
+  , ( (0, xK_k),         kill)
+  , ( (0, xK_slash),     sendMessage $ Toggle MIRROR)
+  ]
 
 -- submap to trigger / start applications
 appSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
@@ -325,18 +347,6 @@ promptSubmap = M.fromList
   , ( (shiftMask, xK_p), XP.passPrompt myPromptConfig)
   ]
 
--- submaps for less common window operations
-windowSubmap :: M.Map ( ButtonMask, KeySym ) ( X () )
-windowSubmap = M.fromList
-  [ ( (0, xK_s),         withFocused $ windows . W.sink)
-  , ( (shiftMask, xK_s), sinkAll)
-  , ( (0, xK_f),         withFocused float)
-  , ( (0, xK_l),         sendMessage NextLayout)
-  , ( (0, xK_i),         toSubl NextLayout)
-  , ( (0, xK_k),         kill)
-  , ( (0, xK_slash),     sendMessage $ Toggle MIRROR)
-  ]
-
 mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
 -- mySubmap = resubmapDefaultWithKey $ (\k -> xmessage ("huhu, unexpected key: " ++ (show $ snd k) ) )
 mySubmap = submap
@@ -348,6 +358,10 @@ toggleWSSkipSide ignores = do
   workspace <- gets (W.currentTag . windowset)
   let otherWS =  getOtherWorkspace workspace
   toggleWS' $ otherWS:ignores
+
+outerAction :: Message a => a -> X ()
+outerAction = sendMessage . G.ToEnclosing . SomeMessage
+-- sendMessage $ G.ToFocused $ SomeMessage NextLayout
 
 myMainKeys :: [(( ButtonMask, KeySym ), X () )]
 myMainKeys =
@@ -367,10 +381,6 @@ myMainKeys =
   , ( (myShiftMask,             xK_t),         workspaceKitty "term" >> promote)
   , ( (myModMask,               xK_slash),     focusUrgent)
 
-  -- SubLayout: iterate inside a single group
-  , ( (myModMask,               xK_period),    onGroup W.focusDown')
-  , ( (myModMask,               xK_comma),     onGroup W.focusUp')
-
   -- SubLayout: go / swap in the four directions
   , ( (myModMask,               xK_l),         sendMessage $ Go R)
   , ( (myModMask,               xK_h),         sendMessage $ Go L)
@@ -378,12 +388,12 @@ myMainKeys =
   , ( (myModMask,               xK_j),         sendMessage $ Go D)
   , ( (myShiftMask,             xK_l),         sendMessage $ Swap R)
   , ( (myShiftMask,             xK_h),         sendMessage $ Swap L)
-  , ( (myShiftMask,             xK_k),         sendMessage $ Swap U)
-  , ( (myShiftMask,             xK_j),         sendMessage $ Swap D)
-  , ( (myControlMask,           xK_h),         sendMessage Shrink)
-  , ( (myControlMask,           xK_l),         sendMessage Expand)
-  , ( (myControlMask,           xK_j),         sendMessage MirrorShrink)
-  , ( (myControlMask,           xK_k),         sendMessage MirrorExpand)
+  , ( (myShiftMask,             xK_k),         sendMessage $ G.Modify $ G.moveToGroupUp False)
+  , ( (myShiftMask,             xK_j),         sendMessage $ G.Modify $ G.moveToGroupDown False)
+  , ( (myControlMask,           xK_h),         outerAction Shrink)
+  , ( (myControlMask,           xK_l),         outerAction Expand)
+  , ( (myControlMask,           xK_j),         outerAction MirrorShrink)
+  , ( (myControlMask,           xK_k),         outerAction MirrorExpand)
 
   -- SubLayout: merge windows, explode
   , ( (myAltMask,               xK_BackSpace), sendMessage $ pullGroup L)
@@ -408,15 +418,25 @@ myMainKeys =
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
 myBaseKeys conf = myMainKeys ++
-  [ ( (myModMask,   xK_Return), promote)
-  , ( (myShiftMask, xK_Return), windows W.focusMaster)
+  -- managing groups: next, previous, shift windows between, promote group go master
+  -- note that these group-specific actions don't work with non-grouped outer layouts
+  [ ( (myModMask,   xK_Return), GH.focusGroupMaster)
+  , ( (myAltMask,   xK_Return), GH.swapGroupMaster)
+  , ( (myModMask,   xK_n),      GH.focusGroupDown)
+  , ( (myModMask,   xK_p),      GH.focusGroupUp)
+  , ( (myShiftMask, xK_n),      GH.moveToGroupDown False)
+  , ( (myShiftMask, xK_p),      GH.moveToGroupUp False)
+  , ( (myAltMask,   xK_n),      GH.swapGroupDown)
+  , ( (myAltMask,   xK_p),      GH.swapGroupUp)
 
-  -- basic window switch via mod-{n,p}. Mix in shift to not bring front
-  , ( (myShiftMask, xK_Return), promote)
-  , ( (myShiftMask, xK_n),      windows W.swapDown)
-  , ( (myShiftMask, xK_p),      windows W.swapUp)
-  , ( (myModMask,   xK_n),      windows W.focusDown)
-  , ( (myModMask,   xK_p),      windows W.focusUp)
+  -- only works _inside_ a group, which is what I want but unexpected :)
+  -- this is also the way to navigate when in a layout that's not a group
+  , ( (myModMask,   xK_period), GH.focusDown)
+  , ( (myModMask,   xK_comma),  GH.focusUp)
+
+  -- TODO: no visible effect
+  , ( (myShiftMask, xK_period), GH.swapDown)
+  , ( (myShiftMask, xK_comma),  GH.swapUp)
 
   , ( (myAltMask,   xK_v), namedScratchpadAction scratchpads "pavucontrol")
   , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "anki")
