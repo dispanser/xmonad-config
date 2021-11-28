@@ -85,7 +85,7 @@ myTerminal, myBrowser, myEditor, myQute :: String
 myBrowser  = "vimb"
 myQute     = "qutebrowser --backend webengine --qt-arg name global_qute"
 myEditor   = "emacsclient -c"
-myTerminal = "urxvt"
+myTerminal = "kitty -1"
 
 -- for word-level edit operations, split at each non-alpha char
 wordSeparator :: Char -> Bool
@@ -134,7 +134,7 @@ myManageHook = namedScratchpadManageHook scratchpads
   , className =?           "jetbrains-idea-ce"    --> addTagHook "i"
   , className =?           "R_x11"                --> addTagHook "i"
   , className =?           "URxvt"                --> addTagHook "u"
-  , className =?           "Alacritty"            --> addTagHook "u"
+  , className =?           "kitty"                --> addTagHook "u"
   , className =?           "Spotify"              --> doRectFloat rightBarRect
   , role      =?           "browser-edit"         --> doRectFloat lowerRightRect
   , appName   =?           "browser-edit"         --> doRectFloat lowerRightRect
@@ -174,7 +174,7 @@ emacsScratchpad scratchName file = NS scratchName command q
     command = "emacs -T " ++ scratchName ++ " " ++ file
     q       = title =? scratchName
 
--- outdated: using the pidgin-window-merge plugin, no message window / contact lis separation
+-- outdated: using the pidgin-window-merge plugin, no message window / contact list separation
 isPidginContactList, isPidginMessageWindow, isPidginClass, isBuddy :: Query Bool
 isPidginContactList   = isPidginClass <&&> isBuddy
 isPidginMessageWindow = isPidginClass <&&> notQ isBuddy
@@ -193,7 +193,7 @@ startsWith :: Eq a => Query [a] -> [a] -> Query Bool
 startsWith q prefix = isPrefixOf prefix <$> q
 
 localTmux :: String -> X ()
-localTmux = S.localScratch tmux
+localTmux = S.localScratch kitty
 
 localEmacsClient :: FilePath -> String -> String -> X ()
 localEmacsClient file suffix server = do
@@ -203,15 +203,18 @@ localEmacsClient file suffix server = do
 
 tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
 tmuxScratchpad session = NS session command (appName =? session)
-  where command = tmux session
+  where command = kitty session
 
 shellScratchpad :: String -> ManageHook -> NamedScratchpad
 shellScratchpad session = NS session command (appName =? name')
-  where command = "urxvt -name " ++ name' ++ " -e " ++ session
+  where command = "kitty --name " ++ name' ++ " -e " ++ session
         name'   = filter (/= ' ') session
 
 tmux :: String -> String
-tmux session = myTerminal ++ " -name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
+tmux session = "urxvt" ++ " -name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
+
+kitty :: String -> String
+kitty session = myTerminal ++ " --name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
 
 x, y, gapSize, fullWidth, fullHeight, left, up :: Rational
 x          = 1920
@@ -374,8 +377,8 @@ myMainKeys =
   -- , ( (myModMask,               xK_g),         localEmacsClient "master.org"  "org" "org-mode")
   , ( (myModMask,               xK_backslash), localEmacsClient "scratch.org" "scratch" "org-mode")
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
-  , ( (myModMask,               xK_t),         runOrRaiseLocal "term")
-  , ( (myShiftMask,             xK_t),         runOrRaiseLocal "term" >> promote)
+  , ( (myModMask,               xK_t),         workspaceKitty "term")
+  , ( (myShiftMask,             xK_t),         workspaceKitty "term" >> promote)
   , ( (myModMask,               xK_slash),     focusUrgent)
 
   -- SubLayout: go / swap in the four directions
@@ -488,11 +491,11 @@ toggleTag tag window = do
   then delTag tag window
   else addTag tag window
 
-runOrRaiseLocal :: String -> X ()
-runOrRaiseLocal suffix = do
+workspaceKitty :: String -> X ()
+workspaceKitty suffix = do
   workspace <- gets (W.currentTag . windowset)
   let localName = workspace ++ "_" ++ suffix
-  raiseMaybe (spawn $ tmux localName) (appName =? localName)
+  raiseMaybe (spawn $ kitty localName) (appName =? localName)
 
 -- | Send a key to the window
 sendKeyEvent :: ButtonMask -> KeySym -> Window -> X ()
