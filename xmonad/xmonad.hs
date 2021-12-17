@@ -100,8 +100,22 @@ myPromptConfig = def
     , searchPredicate = isSubsequenceOf
     }
 
+-- list of scratchpads. Maybe the biggest downside compared to the NamedScratchpad
+-- is the lack of a global scratchpad lookup place. We create top-level bindings
+-- and reference them where needed.
+journal, htop, hud :: S.ScratchApp
+journal = S.globalKitty "journalctl -xf" centeredRect
+htop    = S.globalKitty "htop" centeredRect
+hud     = S.globalTmux  "hud" upperBarRect
+confT   = S.globalTmux  "config" leftBarRect
+
+-- this place is neecssary to have their hooks registed
+scratches :: [S.ScratchApp]
+scratches = [ journal, htop, hud, confT]
+
 myManageHook :: ManageHook
 myManageHook = namedScratchpadManageHook scratchpads
+  <+> composeAll (S.hook <$> scratches)
   <+> composeAll
   [ title     =?           "xmessage"             --> doRectFloat centeredRect
   , appName   `endsWith`   "_overlay"             --> doRectFloat rightBarRect
@@ -130,7 +144,6 @@ myManageHook = namedScratchpadManageHook scratchpads
   , role      =?           "browser-edit"         --> doRectFloat lowerRightRect
   , appName   =?           "browser-edit"         --> doRectFloat lowerRightRect
   ]
-
 role :: Query String
 role = stringProperty "WM_WINDOW_ROLE"
 
@@ -143,12 +156,7 @@ addTagHook tag = do
 
 scratchpads :: [NamedScratchpad]
 scratchpads =
-    [ shellScratchpad "htop"                              ( customFloating centeredRect )
-    , shellScratchpad "journalctl -xf"                    ( customFloating centeredRect )
-    , tmuxScratchpad "_mail"                              ( customFloating centeredRect )
-    , tmuxScratchpad "hud"                                ( customFloating upperBarRect )
-    , tmuxScratchpad "config"                             ( customFloating leftBarRect )
-    , NS "pavucontrol" "pavucontrol" (className =? "Pavucontrol") ( customFloating centeredRect )
+    [ NS "pavucontrol" "pavucontrol" (className =? "Pavucontrol") ( customFloating centeredRect )
     , NS "obsidian" "obsidian" (className =? "obsidian") ( customFloating centeredRect )
     , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
     , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
@@ -185,18 +193,6 @@ startsWith q prefix = isPrefixOf prefix <$> q
 
 localTmux :: String -> X ()
 localTmux = S.localScratch kitty
-
-tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
-tmuxScratchpad session = NS session command (appName =? session)
-  where command = kitty session
-
-shellScratchpad :: String -> ManageHook -> NamedScratchpad
-shellScratchpad session = NS session command (appName =? name')
-  where command = "kitty --name " ++ name' ++ " -e " ++ session
-        name'   = filter (/= ' ') session
-
-tmux :: String -> String
-tmux session = "urxvt" ++ " -name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
 
 kitty :: String -> String
 kitty session = myTerminal ++ " --name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
@@ -313,8 +309,8 @@ appSubmap = M.fromList
   , ( (0, xK_b), spawn myBrowser)
   , ( (0, xK_e), spawn myEditor)
   , ( (0, xK_v), spawn "gvim")
-  , ( (0, xK_h), namedScratchpadAction scratchpads "htop")
-  , ( (0, xK_l), namedScratchpadAction scratchpads "journalctl -xf")
+  , ( (0, xK_h), S.triggerScratch htop)
+  , ( (0, xK_l), S.triggerScratch journal)
   , ( (0, xK_s), namedScratchpadAction scratchpads "spotify")
   ]
 
@@ -352,8 +348,8 @@ myMainKeys =
   , ( (myModMask,               xK_s),         nextScreen)
   , ( (myAltMask,               xK_c),         namedScratchpadAction scratchpads "firefox")
   , ( (myShiftMask,             xK_c),         namedScratchpadAction scratchpads "chromium")
-  , ( (myModMask,               xK_q),         namedScratchpadAction scratchpads "hud")
-  , ( (myShiftMask,             xK_q),         namedScratchpadAction scratchpads "config")
+  , ( (myModMask,               xK_q),         S.triggerScratch hud)
+  , ( (myShiftMask,             xK_q),         S.triggerScratch confT)
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
   , ( (myModMask,               xK_t),         workspaceKitty "term")
   , ( (myShiftMask,             xK_t),         workspaceKitty "term" >> promote)
