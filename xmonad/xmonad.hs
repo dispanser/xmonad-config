@@ -1,6 +1,5 @@
 import qualified XMonad.Layout.Groups                as G
 import qualified XMonad.Layout.Groups.Helpers        as GH
-import qualified XMonad.Layout.Groups.Examples       as GE
 import           XMonad.Prompt                       (XPConfig(..), XPPosition(CenteredAt),
                                                      defaultXPKeymap')
 import qualified XMonad.Prompt.Pass                  as XP
@@ -33,7 +32,7 @@ import           XMonad.Actions.Submap               (submap)
 import           XMonad.Actions.TagWindows           (addTag, delTag,
                                                       focusUpTagged, hasTag)
 import           XMonad.Actions.UpdatePointer        (updatePointer)
-import           XMonad.Actions.WindowGo             (ifWindow, raiseMaybe)
+import           XMonad.Actions.WindowGo             (raiseMaybe)
 
 
 import           XMonad.Hooks.EwmhDesktops           (ewmh)
@@ -44,8 +43,6 @@ import           XMonad.Hooks.UrgencyHook            (UrgencyHook(..), focusUrge
 --                                                       refocusLastLogHook, shiftRL)
 
 import           XMonad.Layout.Accordion             (Accordion (..))
-import           XMonad.Layout.BoringWindows         (boringWindows)
-import           XMonad.Layout.Cross
 import           XMonad.Layout.Decoration
 import           XMonad.Layout.MultiToggle
 import           XMonad.Layout.MultiToggle.Instances
@@ -54,9 +51,6 @@ import           XMonad.Layout.NoFrillsDecoration
 import           XMonad.Layout.ResizableTile
 import           XMonad.Layout.Simplest
 import qualified XMonad.Layout.Spacing               as XS
-import           XMonad.Layout.SubLayouts            (GroupMsg (..), onGroup,
-                                                      pullGroup, subLayout,
-                                                      toSubl)
 import           XMonad.Layout.Tabbed
 import           XMonad.Layout.ThreeColumns          (ThreeCol (ThreeColMid) )
 import           XMonad.Layout.WindowNavigation
@@ -67,11 +61,8 @@ import           XMonad.Util.NamedScratchpad         (NamedScratchpad (..),
                                                       namedScratchpadAction,
                                                       namedScratchpadManageHook)
 import           XMonad.Util.Run                     (safeSpawn)
-import           XMonad.Layout.TrackFloating         (trackFloating,
-                                                      useTransientFor)
 import qualified PiMonad.Scratches                   as S
-import           PiMonad.Workspaces                  (getMainWorkspace,
-                                                      getOtherWorkspace,
+import           PiMonad.Workspaces                  (getOtherWorkspace,
                                                       projectFile, projects,
                                                       shiftToOtherWorkspace,
                                                       toggleSideWorkspace)
@@ -313,7 +304,6 @@ windowSubmap = M.fromList
   , ( (0, xK_f),         withFocused float)
   , ( (0, xK_l),         sendMessage NextLayout)
   , ( (shiftMask, xK_l), sendMessage $ G.ToFocused $ SomeMessage NextLayout)
-  -- , ( (shiftMask, xK_l), toSubl NextLayout)
   , ( (0, xK_g),         sendMessage $ G.Modify G.splitGroup)
   , ( (0, xK_i),         sendMessage $ IncMasterN 1)
   , ( (0, xK_d),         sendMessage . IncMasterN $ -1)
@@ -347,10 +337,6 @@ promptSubmap = M.fromList
   , ( (shiftMask, xK_p), XP.passPrompt myPromptConfig)
   ]
 
-mySubmap :: M.Map ( KeyMask, KeySym) ( X () ) -> X ()
--- mySubmap = resubmapDefaultWithKey $ (\k -> xmessage ("huhu, unexpected key: " ++ (show $ snd k) ) )
-mySubmap = submap
-
 -- | toggle to previous workspace, skipping the workspace that is the associated
 -- side (or main) workspace of the current workspace
 toggleWSSkipSide :: [String] -> X()
@@ -365,9 +351,9 @@ outerAction = sendMessage . G.ToEnclosing . SomeMessage
 
 myMainKeys :: [(( ButtonMask, KeySym ), X () )]
 myMainKeys =
-  [ ( (myModMask,               xK_a),         mySubmap appSubmap)
-  , ( (myModMask,               xK_z),         mySubmap promptSubmap)
-  , ( (myModMask,               xK_w),         mySubmap windowSubmap)
+  [ ( (myModMask,               xK_a),         submap appSubmap)
+  , ( (myModMask,               xK_z),         submap promptSubmap)
+  , ( (myModMask,               xK_w),         submap windowSubmap)
   , ( (myModMask,               xK_r),         toggleWSSkipSide ["NSP", "_"])
   , ( (myModMask,               xK_s),         nextScreen)
   , ( (myAltMask,               xK_c),         namedScratchpadAction scratchpads "firefox")
@@ -395,14 +381,6 @@ myMainKeys =
   , ( (myControlMask,           xK_j),         outerAction MirrorShrink)
   , ( (myControlMask,           xK_k),         outerAction MirrorExpand)
 
-  -- SubLayout: merge windows, explode
-  , ( (myAltMask,               xK_BackSpace), sendMessage $ pullGroup L)
-  -- , ( (myAltMask, xK_l), sendMessage $ pullGroup R)
-  , ( (myAltMask,               xK_k),         sendMessage $ pullGroup U)
-  , ( (myAltMask,               xK_j),         sendMessage $ pullGroup D)
-  , ( (myAltMask,               xK_x),         withFocused $ sendMessage . UnMerge)
-  , ( (myAltMask .|. shiftMask, xK_x),         withFocused $ sendMessage . UnMergeAll)
-
   -- overlay terminal: one per workspace. Very similar to named scratchpads,
   -- but doesn't have to be registered at startup.
   , ( (myModMask,               xK_o),         localTmux "overlay")
@@ -417,7 +395,7 @@ myMainKeys =
   ]
 
 myBaseKeys :: XConfig Layout -> [(( ButtonMask, KeySym ), X () )]
-myBaseKeys conf = myMainKeys ++
+myBaseKeys _conf = myMainKeys ++
   -- managing groups: next, previous, shift windows between, promote group go master
   -- note that these group-specific actions don't work with non-grouped outer layouts
   [ ( (myModMask,   xK_Return), GH.focusGroupMaster)
@@ -482,7 +460,7 @@ tagControl = [ ( myModMask,     focusUpTagged )
 
 buildTagKeys :: [Tag] -> [(( ButtonMask, KeySym ), X () )]
 buildTagKeys tagKeys =
-  [ ( ( modMask, keyToCode M.! key ), action [key] ) | (modMask, action ) <- tagControl, key <- tagKeys ]
+  [ ( ( modMask', keyToCode M.! key ), action [key] ) | (modMask', action ) <- tagControl, key <- tagKeys ]
 
 toggleTag :: String -> Window -> X ()
 toggleTag tag window = do
@@ -514,9 +492,9 @@ data LibNotifyUrgencyHook = LibNotifyUrgencyHook deriving (Read, Show)
 
 instance UrgencyHook LibNotifyUrgencyHook where
     urgencyHook LibNotifyUrgencyHook w = do
-        name     <- getName w
+        n        <- getName w
         Just idx <- fmap (W.findTag w) $ gets windowset
-        notify (show name) $ Just $ "workspace " ++ idx
+        notify (show n) $ Just $ "workspace " ++ idx
 
 notify :: String -> Maybe String -> X()
 notify summary body = safeSpawn "notify-send" [summary, fromMaybe "" body]
