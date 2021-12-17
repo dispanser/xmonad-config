@@ -4,6 +4,11 @@ module PiMonad.Scratches ( projectBrowser
                          , toScratch
                          , fromScratchOrFocus
                          , localScratch
+                         , triggerScratch
+                         , globalKitty
+                         , globalTmux
+                         , globalScratch
+                         , ScratchApp (..)
                          )
 where
 
@@ -12,8 +17,36 @@ import           System.FilePath.Posix          ((</>))
 import           XMonad
 import           XMonad.Actions.DynamicProjects (Project (..), currentProject)
 import           XMonad.Actions.WindowGo        (ifWindow)
+import           XMonad.Hooks.ManageHelpers     (doRectFloat)
 import qualified XMonad.StackSet                as W
 import qualified Debug.Trace                    as DT
+
+data ScratchApp  = ScratchApp
+        { commandF :: Project -> String
+        , queryF   :: Project -> Query Bool
+        , hook     :: ManageHook
+        -- , baseKey  :: KeySym
+        }
+globalScratch :: String -> Query Bool -> W.RationalRect -> ScratchApp
+globalScratch command query rect = ScratchApp {
+    commandF = const command,
+    queryF   = const query,
+    hook     = query --> doRectFloat rect
+}
+
+globalKitty :: String -> W.RationalRect -> ScratchApp
+globalKitty shellCommand = globalScratch command query
+  where
+    name'   = filter (/= ' ') shellCommand
+    command = "kitty --name " ++ name' ++ " -e " ++ shellCommand
+    query   = appName =? name'
+
+globalTmux :: String -> W.RationalRect -> ScratchApp
+globalTmux shellCommand = globalScratch command query
+  where
+    name'   = filter (/= ' ') shellCommand
+    command = "kitty --name " ++ name' ++ " -e zsh -i -c \"tas " ++ shellCommand ++ "\""
+    query   = appName =? name'
 
 -- | create a scratchpad given a function that expects the tag suffix as a @String@
 --   and produces the command to be executed, and the local window type that is
@@ -29,6 +62,21 @@ localScratch cmdF suffix = withWindowSet $ \ws -> do
     Just w -> do
       an <- runQuery appName w
       if an == localName
+        then toScratch
+        else windowQuery
+    Nothing -> windowQuery
+
+triggerScratch :: ScratchApp -> X ()
+triggerScratch ScratchApp { .. } = withWindowSet $ \ws -> do
+  pr <- currentProject
+  let command = commandF pr
+  let query   = queryF   pr
+  let focused = W.peek ws
+  let windowQuery = fromScratchOrFocus query (W.currentTag ws) command
+  case focused of
+    Just w -> do
+      matches <- runQuery query w
+      if matches
         then toScratch
         else windowQuery
     Nothing -> windowQuery
