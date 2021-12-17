@@ -186,12 +186,6 @@ startsWith q prefix = isPrefixOf prefix <$> q
 localTmux :: String -> X ()
 localTmux = S.localScratch kitty
 
-localEmacsClient :: FilePath -> String -> String -> X ()
-localEmacsClient file suffix server = do
-  file' <- projectFile file
-  let ecF localName = "emacsclient -c -F '((name . \"" ++ localName ++ "\"))' -s " ++ server ++ " -a '' " ++ file'
-  S.localScratch ecF suffix
-
 tmuxScratchpad :: String -> ManageHook -> NamedScratchpad
 tmuxScratchpad session = NS session command (appName =? session)
   where command = kitty session
@@ -360,8 +354,6 @@ myMainKeys =
   , ( (myShiftMask,             xK_c),         namedScratchpadAction scratchpads "chromium")
   , ( (myModMask,               xK_q),         namedScratchpadAction scratchpads "hud")
   , ( (myShiftMask,             xK_q),         namedScratchpadAction scratchpads "config")
-  -- , ( (myModMask,               xK_g),         localEmacsClient "master.org"  "org" "org-mode")
-  , ( (myModMask,               xK_backslash), localEmacsClient "scratch.org" "scratch" "org-mode")
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
   , ( (myModMask,               xK_t),         workspaceKitty "term")
   , ( (myShiftMask,             xK_t),         workspaceKitty "term" >> promote)
