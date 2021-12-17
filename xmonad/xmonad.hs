@@ -56,10 +56,6 @@ import           XMonad.Layout.ThreeColumns          (ThreeCol (ThreeColMid) )
 import           XMonad.Layout.WindowNavigation
 
 import           XMonad.Util.NamedWindows            (getName)
-import           XMonad.Util.NamedScratchpad         (NamedScratchpad (..),
-                                                      customFloating,
-                                                      namedScratchpadAction,
-                                                      namedScratchpadManageHook)
 import           XMonad.Util.Run                     (safeSpawn)
 import qualified PiMonad.Scratches                   as S
 import           PiMonad.Workspaces                  (getOtherWorkspace,
@@ -103,19 +99,25 @@ myPromptConfig = def
 -- list of scratchpads. Maybe the biggest downside compared to the NamedScratchpad
 -- is the lack of a global scratchpad lookup place. We create top-level bindings
 -- and reference them where needed.
-journal, htop, hud :: S.ScratchApp
-journal = S.globalKitty "journalctl -xf" centeredRect
-htop    = S.globalKitty "htop" centeredRect
-hud     = S.globalTmux  "hud" upperBarRect
-confT   = S.globalTmux  "config" leftBarRect
+journal, htop, hud, confT, obsidian :: S.ScratchApp
+journal     = S.globalKitty "journalctl -xf" centeredRect
+htop        = S.globalKitty "htop" centeredRect
+hud         = S.globalTmux  "hud" upperBarRect
+confT       = S.globalTmux  "config" leftBarRect
+obsidian    = S.globalScratch "obsidian" (className =? "obsidian") centeredRect
+anki        = S.globalScratch "anki" (className =? "Anki") centeredRect
+chromium    = S.globalScratch "chromium" (className =? "Chromium") leftBarRect
+firefox     = S.globalScratch "firefox " (className =? "Firefox") leftBarRect
+pavucontrol = S.globalScratch "pavucontrol" (className =? "Pavucontrol") smallCentered
 
--- this place is neecssary to have their hooks registed
+-- this place is neecssary to have their hooks registered
+-- hacky: we skip chromium, firefox so they don't get floated. there's a better
+-- way, but not today.
 scratches :: [S.ScratchApp]
-scratches = [ journal, htop, hud, confT]
+scratches = [ journal, htop, hud, confT, obsidian, pavucontrol, anki]
 
 myManageHook :: ManageHook
-myManageHook = namedScratchpadManageHook scratchpads
-  <+> composeAll (S.hook <$> scratches)
+myManageHook = composeAll (S.hook <$> scratches)
   <+> composeAll
   [ title     =?           "xmessage"             --> doRectFloat centeredRect
   , appName   `endsWith`   "_overlay"             --> doRectFloat rightBarRect
@@ -153,25 +155,6 @@ addTagHook tag = do
   w <- ask
   liftX $ addTag tag w
   idHook
-
-scratchpads :: [NamedScratchpad]
-scratchpads =
-    [ NS "pavucontrol" "pavucontrol" (className =? "Pavucontrol") ( customFloating centeredRect )
-    , NS "obsidian" "obsidian" (className =? "obsidian") ( customFloating centeredRect )
-    , NS "chromium" "chromium" (className `startsWith` "Chromium")  ( customFloating leftBarRect )
-    , NS "firefox" "firefox" (className =? "Firefox")     ( customFloating leftBarRect )
-    , NS "franz" "Franz" (className =? "Franz")           ( customFloating lowerRightRect )
-    , NS "qutebrowser" myQute (appName =? "global_qute")  ( customFloating leftBarRect )
-    , NS "pidgin" "pidgin" (className =? "Pidgin")        ( customFloating lowerRightRect )
-    , NS "anki" "anki" (className =? "Anki")              ( customFloating centeredRect )
-    , NS "spotify" "spotify" (className =? "Spotify")     ( customFloating centeredRect )
-    ]
-
-emacsScratchpad :: String -> String -> ManageHook -> NamedScratchpad
-emacsScratchpad scratchName file = NS scratchName command q
-  where
-    command = "emacs -T " ++ scratchName ++ " " ++ file
-    q       = title =? scratchName
 
 -- outdated: using the pidgin-window-merge plugin, no message window / contact list separation
 isPidginContactList, isPidginMessageWindow, isPidginClass, isBuddy :: Query Bool
@@ -311,7 +294,6 @@ appSubmap = M.fromList
   , ( (0, xK_v), spawn "gvim")
   , ( (0, xK_h), S.triggerScratch htop)
   , ( (0, xK_l), S.triggerScratch journal)
-  , ( (0, xK_s), namedScratchpadAction scratchpads "spotify")
   ]
 
 -- submaps for various prompt-based actions
@@ -346,8 +328,8 @@ myMainKeys =
   , ( (myModMask,               xK_w),         submap windowSubmap)
   , ( (myModMask,               xK_r),         toggleWSSkipSide ["NSP", "_"])
   , ( (myModMask,               xK_s),         nextScreen)
-  , ( (myAltMask,               xK_c),         namedScratchpadAction scratchpads "firefox")
-  , ( (myShiftMask,             xK_c),         namedScratchpadAction scratchpads "chromium")
+  , ( (myAltMask,               xK_c),         S.triggerScratch firefox)
+  , ( (myShiftMask,             xK_c),         S.triggerScratch chromium)
   , ( (myModMask,               xK_q),         S.triggerScratch hud)
   , ( (myShiftMask,             xK_q),         S.triggerScratch confT)
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
@@ -404,9 +386,9 @@ myBaseKeys _conf = myMainKeys ++
   , ( (myShiftMask, xK_period), GH.swapDown)
   , ( (myShiftMask, xK_comma),  GH.swapUp)
 
-  , ( (myAltMask,   xK_v), namedScratchpadAction scratchpads "pavucontrol")
-  , ( (myModMask,   xK_y), namedScratchpadAction scratchpads "anki")
-  , ( (myModMask,   xK_g), namedScratchpadAction scratchpads "obsidian")
+  , ( (myAltMask,   xK_v), S.triggerScratch pavucontrol)
+  , ( (myModMask,   xK_y), S.triggerScratch anki)
+  , ( (myModMask,   xK_g), S.triggerScratch obsidian)
 
   , ( (myShiftMask, xK_s), shiftNextScreen)
   , ( (myModMask,     xK_BackSpace), toggleSideWorkspace)
