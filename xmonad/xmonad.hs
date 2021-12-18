@@ -252,12 +252,11 @@ myLayoutHook =
     $ groupLayout
 
   where
-    groupLayout = (G.group innerLayout outerLayout) ||| threeCol
+    groupLayout = (G.group innerLayout outerLayout)
     innerLayout = Simplest  ||| Accordion
     tallLayout    = ResizableTall nmaster resizeDelta masterRatio slaveRatios
     -- tallLayout    = Tall nmaster resizeDelta masterRatio
     -- subs          = subLayout [] innerLayout $ boringWindows outerLayout
-    threeCol      = ThreeColMid 1 (3/100) (1/2)
     addTopBar     = noFrillsDeco shrinkText topBarTheme
     outerLayout   = tallLayout
     nmaster       = 1
