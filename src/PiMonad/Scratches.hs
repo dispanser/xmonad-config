@@ -3,15 +3,17 @@
 module PiMonad.Scratches ( projectBrowser
                          , toScratch
                          , fromScratchOrFocus
-                         , localScratch
                          , triggerScratch
                          , globalKitty
                          , globalTmux
                          , globalScratch
+                         , localTmux
+                         , endsWith
                          , ScratchApp (..)
                          )
 where
 
+import           Data.List                      (isSuffixOf)
 import           PiMonad.Workspaces             (getMainWorkspace)
 import           System.FilePath.Posix          ((</>))
 import           XMonad
@@ -24,8 +26,7 @@ import qualified Debug.Trace                    as DT
 data ScratchApp  = ScratchApp
         { commandF :: Project -> String
         , queryF   :: Project -> Query Bool
-        , hook     :: ManageHook
-        -- , baseKey  :: KeySym
+        , hook     :: Maybe ManageHook
         }
 
 term :: String -> String -> String
@@ -36,7 +37,7 @@ globalScratch :: String -> Query Bool -> W.RationalRect -> ScratchApp
 globalScratch command query rect = ScratchApp {
     commandF = const command,
     queryF   = const query,
-    hook     = query --> doRectFloat rect
+    hook     = Just (query --> doRectFloat rect)
 }
 
 globalKitty :: String -> W.RationalRect -> ScratchApp
@@ -53,25 +54,18 @@ globalTmux shellCommand = globalScratch command query
     command = term ("zsh -i -c \"tas " ++ shellCommand ++ "\"") name'
     query   = appName =? name'
 
-localTmux 
+localTmux :: String -> W.RationalRect -> ScratchApp
+localTmux suffix rect =
+  let session pr =  getMainWorkspace (projectName pr) ++ "_" ++ suffix
+  in ScratchApp {
+      commandF = \pr -> term ("zsh -i -c \"tas " ++ session pr ++ "\"") (session pr),
+      queryF   = \pr -> appName =? session pr,
+      hook     = Nothing
+     }
 
--- | create a scratchpad given a function that expects the tag suffix as a @String@
---   and produces the command to be executed, and the local window type that is
---   a part of the globally valid local tag name
-localScratch :: (String -> String) -> String -> X ()
-localScratch cmdF suffix = withWindowSet $ \ws -> do
-  let tag         = W.currentTag ws
-  let focused     = W.peek ws
-  let localName   = DT.traceShowId $ getMainWorkspace tag ++ "_" ++ suffix
-  let command     = cmdF localName
-  let windowQuery = fromScratchOrFocus (appName =? localName) tag command
-  case focused of
-    Just w -> do
-      an <- runQuery appName w
-      if an == localName
-        then toScratch
-        else windowQuery
-    Nothing -> windowQuery
+-- query that checks if the provided query ends with the given sequence.
+endsWith :: Eq a => Query [a] -> [a] -> Query Bool
+endsWith q suffix = isSuffixOf suffix <$> q
 
 triggerScratch :: ScratchApp -> X ()
 triggerScratch ScratchApp { .. } = withWindowSet $ \ws -> do
@@ -87,13 +81,6 @@ triggerScratch ScratchApp { .. } = withWindowSet $ \ws -> do
         then toScratch
         else windowQuery
     Nothing -> windowQuery
-
--- this looks suspicibly similar to the localScratch above
--- TODO: investigate
--- - projectScratch expects a function that, given a project,
---   creates a command (string) and a query; the other one
---   expects a function that produces a command from a string
--- -
 
 projectScratch :: ( Project -> (String, Query Bool) ) -> X ()
 projectScratch cmdF = withWindowSet $ \ws -> do
