@@ -6,7 +6,8 @@ import qualified XMonad.Prompt.Pass                  as XP
 
 -- regular
 import           Data.Char                           (isAlpha)
-import           Data.List                           (isPrefixOf, isSuffixOf, isSubsequenceOf)
+import           Data.List                           (isPrefixOf, isSubsequenceOf)
+import           Data.Maybe                          (catMaybes)
 import qualified Data.Map                            as M
 import           Data.Maybe                          (fromMaybe)
 
@@ -52,7 +53,6 @@ import           XMonad.Layout.ResizableTile
 import           XMonad.Layout.Simplest
 import qualified XMonad.Layout.Spacing               as XS
 import           XMonad.Layout.Tabbed
-import           XMonad.Layout.ThreeColumns          (ThreeCol (ThreeColMid) )
 import           XMonad.Layout.WindowNavigation
 
 import           XMonad.Util.NamedWindows            (getName)
@@ -117,12 +117,12 @@ scratches :: [S.ScratchApp]
 scratches = [ journal, htop, hud, confT, obsidian, pavucontrol, anki]
 
 myManageHook :: ManageHook
-myManageHook = composeAll (S.hook <$> scratches)
+myManageHook = composeAll (catMaybes $ S.hook <$> scratches)
   <+> composeAll
   [ title     =?           "xmessage"             --> doRectFloat centeredRect
-  , appName   `endsWith`   "_overlay"             --> doRectFloat rightBarRect
-  , appName   `endsWith`   "_scratch"             --> doRectFloat centeredRect
-  , appName   `endsWith`   "_org"                 --> doRectFloat centeredRect
+  , appName   `S.endsWith`   "_overlay"             --> doRectFloat rightBarRect
+  , appName   `S.endsWith`   "_scratch"             --> doRectFloat centeredRect
+  , appName   `S.endsWith`   "_org"                 --> doRectFloat centeredRect
   -- title: WM_NAME / _NET_WM_NAME
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
   , title `startsWith` "Slack"                    --> addTagHook "m"
@@ -166,16 +166,9 @@ isBuddy = title =? "Buddy List"
 notQ :: Query Bool -> Query Bool
 notQ q = not <$> q
 
--- query that checks if the provided query ends with the given sequence.
-endsWith :: Eq a => Query [a] -> [a] -> Query Bool
-endsWith q suffix = isSuffixOf suffix <$> q
-
 -- query that checks if the provided query starts with the given sequence.
 startsWith :: Eq a => Query [a] -> [a] -> Query Bool
 startsWith q prefix = isPrefixOf prefix <$> q
-
-localTmux :: String -> X ()
-localTmux = S.localScratch kitty
 
 kitty :: String -> String
 kitty session = myTerminal ++ " --name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
@@ -352,7 +345,7 @@ myMainKeys =
 
   -- overlay terminal: one per workspace. Very similar to named scratchpads,
   -- but doesn't have to be registered at startup.
-  , ( (myModMask,               xK_o),         localTmux "overlay")
+  , ( (myModMask,               xK_o),         S.triggerScratch $ S.localTmux "overlay" rightBarRect)
   , ( (myModMask,               xK_semicolon), S.projectBrowser)
   , ( (myShiftMask,             xK_semicolon), S.projectBrowser >> promote)
   , ( (myModMask,               xK_F5),        spawn "/home/pi/bin/btk.sh")
