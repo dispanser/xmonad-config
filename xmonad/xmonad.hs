@@ -170,9 +170,6 @@ notQ q = not <$> q
 startsWith :: Eq a => Query [a] -> [a] -> Query Bool
 startsWith q prefix = isPrefixOf prefix <$> q
 
-kitty :: String -> String
-kitty session = myTerminal ++ " --name "  ++ session ++ " -e zsh -i -c \"tas " ++ session ++ "\""
-
 x, y, gapSize, fullWidth, fullHeight, left, up :: Rational
 x          = 1920
 y          = 1080
@@ -434,7 +431,7 @@ workspaceKitty :: String -> X ()
 workspaceKitty suffix = do
   workspace <- gets (W.currentTag . windowset)
   let localName = workspace ++ "_" ++ suffix
-  raiseMaybe (spawn $ kitty localName) (appName =? localName)
+  raiseMaybe (spawn $ S.tmuxTerm localName localName) (appName =? localName)
 
 -- | Send a key to the window
 sendKeyEvent :: ButtonMask -> KeySym -> Window -> X ()

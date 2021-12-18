@@ -6,6 +6,9 @@ module PiMonad.Scratches ( fromScratchOrFocus
                          , globalTmux
                          , globalScratch
                          , localTmux
+                         , term
+                         , tmux
+                         , tmuxTerm
                          , endsWith
                          , projectBrowser'
                          , ScratchApp (..)
@@ -31,6 +34,12 @@ term :: String -> String -> String
 term shellCommand cn  =
   "kitty --name " ++ cn ++ " -e " ++ shellCommand
 
+tmux :: String -> String
+tmux session = "zsh -i -c \"tas " ++ session ++ "\""
+
+tmuxTerm :: String -> String -> String
+tmuxTerm shellCommand = term (tmux shellCommand)
+
 globalScratch :: String -> Query Bool -> W.RationalRect -> ScratchApp
 globalScratch command query rect = ScratchApp {
     commandF = const command,
@@ -49,14 +58,14 @@ globalTmux :: String -> W.RationalRect -> ScratchApp
 globalTmux shellCommand = globalScratch command query
   where
     name'   = filter (/= ' ') shellCommand
-    command = term ("zsh -i -c \"tas " ++ shellCommand ++ "\"") name'
+    command = term (tmux shellCommand) name'
     query   = appName =? name'
 
 localTmux :: String -> W.RationalRect -> ScratchApp
 localTmux suffix rect =
   let session pr =  getMainWorkspace (projectName pr) ++ "_" ++ suffix
   in ScratchApp {
-      commandF = \pr -> term ("zsh -i -c \"tas " ++ session pr ++ "\"") (session pr),
+      commandF = \pr -> term (tmux $ session pr) (session pr),
       queryF   = \pr -> appName =? session pr,
       hook     = Nothing
      }
