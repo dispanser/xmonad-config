@@ -27,6 +27,11 @@ data ScratchApp  = ScratchApp
         , hook     :: ManageHook
         -- , baseKey  :: KeySym
         }
+
+term :: String -> String -> String
+term shellCommand className  =
+  "kitty --name " ++ className ++ " -e " ++ shellCommand
+
 globalScratch :: String -> Query Bool -> W.RationalRect -> ScratchApp
 globalScratch command query rect = ScratchApp {
     commandF = const command,
@@ -38,15 +43,17 @@ globalKitty :: String -> W.RationalRect -> ScratchApp
 globalKitty shellCommand = globalScratch command query
   where
     name'   = filter (/= ' ') shellCommand
-    command = "kitty --name " ++ name' ++ " -e " ++ shellCommand
+    command = term shellCommand name'
     query   = appName =? name'
 
 globalTmux :: String -> W.RationalRect -> ScratchApp
 globalTmux shellCommand = globalScratch command query
   where
     name'   = filter (/= ' ') shellCommand
-    command = "kitty --name " ++ name' ++ " -e zsh -i -c \"tas " ++ shellCommand ++ "\""
+    command = term ("zsh -i -c \"tas " ++ shellCommand ++ "\"") name'
     query   = appName =? name'
+
+localTmux 
 
 -- | create a scratchpad given a function that expects the tag suffix as a @String@
 --   and produces the command to be executed, and the local window type that is
