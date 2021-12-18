@@ -346,8 +346,7 @@ myMainKeys =
   -- overlay terminal: one per workspace. Very similar to named scratchpads,
   -- but doesn't have to be registered at startup.
   , ( (myModMask,               xK_o),         S.triggerScratch $ S.localTmux "overlay" rightBarRect)
-  , ( (myModMask,               xK_semicolon), S.projectBrowser)
-  , ( (myShiftMask,             xK_semicolon), S.projectBrowser >> promote)
+  , ( (myModMask,               xK_semicolon), S.triggerScratch S.projectBrowser')
   , ( (myModMask,               xK_F5),        spawn "/home/pi/bin/btk.sh")
   , ( (myModMask,               xK_F7),        spawn "xmodmap /home/pi/.Xmodmap")
   , ( (myModMask,               xK_F11),       spawn "xlock -mode blank")

@@ -1,14 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module PiMonad.Scratches ( projectBrowser
-                         , toScratch
-                         , fromScratchOrFocus
+module PiMonad.Scratches ( fromScratchOrFocus
                          , triggerScratch
                          , globalKitty
                          , globalTmux
                          , globalScratch
                          , localTmux
                          , endsWith
+                         , projectBrowser'
                          , ScratchApp (..)
                          )
 where
@@ -21,7 +20,6 @@ import           XMonad.Actions.DynamicProjects (Project (..), currentProject)
 import           XMonad.Actions.WindowGo        (ifWindow)
 import           XMonad.Hooks.ManageHelpers     (doRectFloat)
 import qualified XMonad.StackSet                as W
-import qualified Debug.Trace                    as DT
 
 data ScratchApp  = ScratchApp
         { commandF :: Project -> String
@@ -30,8 +28,8 @@ data ScratchApp  = ScratchApp
         }
 
 term :: String -> String -> String
-term shellCommand className  =
-  "kitty --name " ++ className ++ " -e " ++ shellCommand
+term shellCommand cn  =
+  "kitty --name " ++ cn ++ " -e " ++ shellCommand
 
 globalScratch :: String -> Query Bool -> W.RationalRect -> ScratchApp
 globalScratch command query rect = ScratchApp {
@@ -82,20 +80,6 @@ triggerScratch ScratchApp { .. } = withWindowSet $ \ws -> do
         else windowQuery
     Nothing -> windowQuery
 
-projectScratch :: ( Project -> (String, Query Bool) ) -> X ()
-projectScratch cmdF = withWindowSet $ \ws -> do
-  pr <- currentProject
-  let (command, query) = cmdF pr
-  let focused = W.peek ws
-  let windowQuery = fromScratchOrFocus query (W.currentTag ws) command
-  case focused of
-    Just w -> do
-      matches <- runQuery query w
-      if matches
-        then toScratch
-        else windowQuery
-    Nothing -> windowQuery
-
 -- if the windows' workspace is visible, go there and focus
 -- otherwise, bring to current workspace and focus
 showOrBring :: WorkspaceId -> ManageHook
@@ -120,14 +104,15 @@ toScratch = windows $ W.shift "NSP"
 fromScratchOrFocus :: Query Bool -> WorkspaceId -> String -> X ()
 fromScratchOrFocus q i c = ifWindow q (showOrBring i) (spawn c)
 
-projectBrowser :: X ()
-projectBrowser = projectScratch cmdF
-  where
-    cmdF Project {..} = ( "qutebrowser --qt-arg name " ++ localName ++
-                             " --target window --basedir " ++ projectDir
-                           , appName =? localName )
-      where localName  = getMainWorkspace projectName ++ "_qute"
-            projectDir = projectDirectory </> ".qute"
+projectBrowser' :: ScratchApp
+projectBrowser' =
+   let localName pr = getMainWorkspace (projectName pr)
+       command pr = "qutebrowser --qt-arg name " ++ localName pr ++ " --target window --basedir " ++ (projectDirectory pr </> ".qute")
+   in ScratchApp {
+     commandF = command,
+     queryF   = \pr -> appName =? localName pr,
+     hook     = Nothing
+   }
 
 -- | create a scratchpad given a function that takes the project and produces
 -- the command to be executed, and another function that
