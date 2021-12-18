@@ -94,7 +94,6 @@ triggerScratch ScratchApp { .. } = withWindowSet $ \ws -> do
 showOrBring :: WorkspaceId -> ManageHook
 showOrBring i = do
   w <- ask
-  -- let (Just curentWS) = W.findTag w
   doF $ showOrBringWindow i w
 
 -- showOrBringWindow :: WorkspaceId -> Window -> W.StackSet -> ManageHook
