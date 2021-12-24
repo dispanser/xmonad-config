@@ -125,14 +125,14 @@ myManageHook = composeAll (catMaybes $ S.hook <$> scratches)
   , appName   `S.endsWith`   "_org"                 --> doRectFloat centeredRect
   -- title: WM_NAME / _NET_WM_NAME
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
-  , title `startsWith` "Slack"                    --> addTagHook "m"
-  , title `startsWith` "Signal"                   --> addTagHook "m"
+  , title `S.startsWith` "Slack"                    --> addTagHook "m"
+  , title `S.startsWith` "Signal"                   --> addTagHook "m"
   , className =?           "TelegramDesktop"      --> addTagHook "m"
   , className =?           "Franz"                --> addTagHook "m" >> doRectFloat centeredRect
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
   , className =?           "Vimb"                 --> addTagHook "b"
   , className =?           "Firefox"              --> addTagHook "b"
-  , className `startsWith` "Chromium"             --> addTagHook "b"
+  , className `S.startsWith` "Chromium"             --> addTagHook "b"
   , className =?           "qutebrowser"          --> addTagHook "b"             >>     doRectFloat leftBarRect
   , className =?           "Emacs"                --> addTagHook "e"
   , className =?           "Gvim"                 --> addTagHook "v"
