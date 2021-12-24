@@ -9,13 +9,14 @@ module PiMonad.Scratches ( fromScratchOrFocus
                          , term
                          , tmux
                          , tmuxTerm
+                         , startsWith
                          , endsWith
                          , projectBrowser'
                          , ScratchApp (..)
                          )
 where
 
-import           Data.List                      (isSuffixOf)
+import           Data.List                      (isPrefixOf, isSuffixOf)
 import           PiMonad.Workspaces             (getMainWorkspace)
 import           System.FilePath.Posix          ((</>))
 import           XMonad
@@ -73,6 +74,10 @@ localTmux suffix rect =
 -- query that checks if the provided query ends with the given sequence.
 endsWith :: Eq a => Query [a] -> [a] -> Query Bool
 endsWith q suffix = isSuffixOf suffix <$> q
+
+-- query that checks if the provided query starts with the given sequence.
+startsWith :: Eq a => Query [a] -> [a] -> Query Bool
+startsWith q prefix = isPrefixOf prefix <$> q
 
 triggerScratch :: ScratchApp -> X ()
 triggerScratch ScratchApp { .. } = withWindowSet $ \ws -> do
