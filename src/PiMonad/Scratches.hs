@@ -13,6 +13,7 @@ module PiMonad.Scratches ( fromScratchOrFocus
                          , endsWith
                          , contains
                          , projectBrowser'
+                         , projectChromium
                          , ScratchApp (..)
                          )
 where
@@ -125,6 +126,17 @@ projectBrowser' :: ScratchApp
 projectBrowser' =
    let localName pr = getMainWorkspace (projectName pr)
        command pr = "qutebrowser --qt-arg name " ++ localName pr ++ " --target window --basedir " ++ (projectDirectory pr </> ".qute")
+   in ScratchApp {
+     commandF = command,
+     queryF   = \pr -> appName =? localName pr,
+     hook     = Nothing
+   }
+
+projectChromium :: ScratchApp
+projectChromium =
+   let localName pr = getMainWorkspace (projectName pr) ++ "_chr"
+       command pr = "chromium --class=" ++ localName pr ++
+        " --user-data-dir=" ++ (projectDirectory pr </> ".chromium")
    in ScratchApp {
      commandF = command,
      queryF   = \pr -> appName =? localName pr,

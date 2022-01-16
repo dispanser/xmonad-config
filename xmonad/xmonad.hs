@@ -146,6 +146,7 @@ myManageHook = composeAll (catMaybes $ S.hook <$> scratches)
   , role      =?           "browser-edit"         --> doRectFloat lowerRightRect
   , appName   =?           "browser-edit"         --> doRectFloat lowerRightRect
   ]
+
 role :: Query String
 role = stringProperty "WM_WINDOW_ROLE"
 
@@ -314,7 +315,7 @@ myMainKeys =
   , ( (myModMask,               xK_r),         toggleWSSkipSide ["NSP", "_"])
   , ( (myModMask,               xK_s),         nextScreen)
   , ( (myAltMask,               xK_c),         S.triggerScratch firefox)
-  , ( (myShiftMask,             xK_c),         S.triggerScratch chromium)
+  , ( (myControlMask,           xK_c),         S.triggerScratch chromium)
   , ( (myModMask,               xK_q),         S.triggerScratch hud)
   , ( (myShiftMask,             xK_q),         S.triggerScratch confT)
   , ( (myModMask,               xK_f),         sendMessage $ Toggle FULL)
@@ -340,6 +341,8 @@ myMainKeys =
   -- but doesn't have to be registered at startup.
   , ( (myModMask,               xK_o),         S.triggerScratch $ S.localTmux "overlay" rightBarRect)
   , ( (myModMask,               xK_semicolon), S.triggerScratch S.projectBrowser')
+  , ( (myAltMask,               xK_semicolon), S.triggerScratch S.projectChromium)
+  , ( (myShiftMask,             xK_c),         S.triggerScratch S.projectChromium)
   , ( (myModMask,               xK_F5),        spawn "/home/pi/bin/btk.sh")
   , ( (myModMask,               xK_F7),        spawn "xmodmap /home/pi/.Xmodmap")
   , ( (myModMask,               xK_F11),       spawn "xlock -mode blank")
