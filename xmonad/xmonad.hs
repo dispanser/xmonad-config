@@ -6,7 +6,7 @@ import qualified XMonad.Prompt.Pass                  as XP
 
 -- regular
 import           Data.Char                           (isAlpha)
-import           Data.List                           (isPrefixOf, isSubsequenceOf)
+import           Data.List                           (isSubsequenceOf)
 import           Data.Maybe                          (catMaybes)
 import qualified Data.Map                            as M
 import           Data.Maybe                          (fromMaybe)
@@ -106,7 +106,7 @@ hud         = S.globalTmux  "hud" upperBarRect
 confT       = S.globalTmux  "config" leftBarRect
 obsidian    = S.globalScratch "obsidian" (className =? "obsidian") centeredRect
 anki        = S.globalScratch "anki" (className =? "Anki") centeredRect
-chromium    = S.globalScratch "chromium" (className =? "Chromium") leftBarRect
+chromium    = S.globalScratch "chromium" (className `S.contains` "hromium") leftBarRect
 firefox     = S.globalScratch "firefox " (className =? "Firefox") leftBarRect
 pavucontrol = S.globalScratch "pavucontrol" (className =? "Pavucontrol") smallCentered
 
@@ -132,7 +132,7 @@ myManageHook = composeAll (catMaybes $ S.hook <$> scratches)
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
   , className =?           "Vimb"                 --> addTagHook "b"
   , className =?           "Firefox"              --> addTagHook "b"
-  , className `S.startsWith` "Chromium"             --> addTagHook "b"
+  , appName   `S.contains` "hromium"              --> addTagHook "b"
   , className =?           "qutebrowser"          --> addTagHook "b"             >>     doRectFloat leftBarRect
   , className =?           "Emacs"                --> addTagHook "e"
   , className =?           "Gvim"                 --> addTagHook "v"
@@ -165,10 +165,6 @@ isBuddy = title =? "Buddy List"
 
 notQ :: Query Bool -> Query Bool
 notQ q = not <$> q
-
--- query that checks if the provided query starts with the given sequence.
-startsWith :: Eq a => Query [a] -> [a] -> Query Bool
-startsWith q prefix = isPrefixOf prefix <$> q
 
 x, y, gapSize, fullWidth, fullHeight, left, up :: Rational
 x          = 1920

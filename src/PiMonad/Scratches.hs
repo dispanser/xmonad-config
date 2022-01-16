@@ -11,12 +11,13 @@ module PiMonad.Scratches ( fromScratchOrFocus
                          , tmuxTerm
                          , startsWith
                          , endsWith
+                         , contains
                          , projectBrowser'
                          , ScratchApp (..)
                          )
 where
 
-import           Data.List                      (isPrefixOf, isSuffixOf)
+import           Data.List                      (isPrefixOf, isSuffixOf, isInfixOf)
 import           PiMonad.Workspaces             (getMainWorkspace)
 import           System.FilePath.Posix          ((</>))
 import           XMonad
@@ -79,6 +80,9 @@ endsWith q suffix = isSuffixOf suffix <$> q
 startsWith :: Eq a => Query [a] -> [a] -> Query Bool
 startsWith q prefix = isPrefixOf prefix <$> q
 
+contains :: Eq a => Query [a] -> [a] -> Query Bool
+contains q substring = isInfixOf substring <$> q
+
 triggerScratch :: ScratchApp -> X ()
 triggerScratch ScratchApp { .. } = withWindowSet $ \ws -> do
   pr <- currentProject
@@ -126,7 +130,3 @@ projectBrowser' =
      queryF   = \pr -> appName =? localName pr,
      hook     = Nothing
    }
-
--- | create a scratchpad given a function that takes the project and produces
--- the command to be executed, and another function that
---   a part of the globally valid local tag name
