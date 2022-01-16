@@ -300,7 +300,7 @@ promptSubmap = M.fromList
 toggleWSSkipSide :: [String] -> X()
 toggleWSSkipSide ignores = do
   workspace <- gets (W.currentTag . windowset)
-  let otherWS =  getOtherWorkspace workspace
+  let otherWS = getOtherWorkspace workspace
   toggleWS' $ otherWS:ignores
 
 outerAction :: Message a => a -> X ()
@@ -312,7 +312,7 @@ myMainKeys =
   [ ( (myModMask,               xK_a),         submap appSubmap)
   , ( (myModMask,               xK_z),         submap promptSubmap)
   , ( (myModMask,               xK_w),         submap windowSubmap)
-  , ( (myModMask,               xK_r),         toggleWSSkipSide ["NSP", "_"])
+  , ( (myModMask,               xK_r),         toggleWSSkipSide ["NSP", "temporary"])
   , ( (myModMask,               xK_s),         nextScreen)
   , ( (myAltMask,               xK_c),         S.triggerScratch firefox)
   , ( (myControlMask,           xK_c),         S.triggerScratch chromium)

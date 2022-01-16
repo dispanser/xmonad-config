@@ -20,19 +20,23 @@ import           System.Directory                 (doesDirectoryExist,
                                                    listDirectory)
 import           System.FilePath.Posix            ((</>))
 
-projectRoot :: IO FilePath
-projectRoot = (</> "wip") <$> getHomeDirectory
-
 projects :: IO [Project]
 projects = do
-  pr      <- projectRoot
-  entries <- filter (not . (`elem` [".done", ".todo", ".hold"])) <$> listDirectory pr
-  dirs    <- filterM (doesDirectoryExist . (pr </>)) entries
-  return $ concatMap (projectsForDir pr) dirs
+  home      <- getHomeDirectory
+  let pr    =  home </> "wip"
+  entries   <- filter (not . (`elem` [".done", ".todo", ".hold"])) <$> listDirectory pr
+  dirs      <- filterM (doesDirectoryExist . (pr </>)) entries
+  return $ tmpProject home : concatMap (projectsForDir pr) dirs
 
 -- | resolve a file relative to the current project directory
 projectFile :: FilePath -> X FilePath
 projectFile f = ( </> f) . projectDirectory <$> currentProject
+
+tmpProject :: FilePath -> Project
+tmpProject home = Project {
+  projectName      = "temporary",
+  projectDirectory = home </> "tmp",
+  projectStartHook = Nothing }
 
 projectsForDir :: FilePath -> WorkspaceId -> [Project]
 projectsForDir pr d = [ main, side ]
@@ -43,17 +47,17 @@ projectsForDir pr d = [ main, side ]
 
 getSideWorkspace :: WorkspaceId -> WorkspaceId
 getSideWorkspace ws
-  | isSuffixOf "_side" ws = ws
+  | "_side" `isSuffixOf` ws = ws
   | otherwise             = ws ++ "_side"
 
 getMainWorkspace :: WorkspaceId -> WorkspaceId
 getMainWorkspace ws
-  | isSuffixOf "_side" ws = take (length ws - 5) ws
+  | "_side" `isSuffixOf` ws = take (length ws - 5) ws
   | otherwise             = ws
 
 getOtherWorkspace :: WorkspaceId -> WorkspaceId
 getOtherWorkspace ws
-  | isSuffixOf "_side" ws = take (length ws - 5) ws
+  | "_side" `isSuffixOf` ws = take (length ws - 5) ws
   | otherwise             = ws ++ "_side"
 
 toggleSideWorkspace :: X ()
