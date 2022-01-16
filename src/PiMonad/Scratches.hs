@@ -139,6 +139,6 @@ projectChromium =
         " --user-data-dir=" ++ (projectDirectory pr </> ".chromium")
    in ScratchApp {
      commandF = command,
-     queryF   = \pr -> appName =? localName pr,
+     queryF   = \pr -> className =? localName pr,
      hook     = Nothing
    }
