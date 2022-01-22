@@ -66,7 +66,7 @@ import           PiMonad.Workspaces                  (getOtherWorkspace,
 type Tag = Char
 
 myWorkspaces :: [WorkspaceId]
-myWorkspaces = []
+myWorkspaces = ["NSP"]
 
 myTerminal, myBrowser, myEditor, myQute :: String
 myBrowser  = "vimb"
@@ -312,7 +312,7 @@ myMainKeys =
   [ ( (myModMask,               xK_a),         submap appSubmap)
   , ( (myModMask,               xK_z),         submap promptSubmap)
   , ( (myModMask,               xK_w),         submap windowSubmap)
-  , ( (myModMask,               xK_r),         toggleWSSkipSide ["NSP", "temporary"])
+  , ( (myModMask,               xK_r),         toggleWSSkipSide ["NSP", "scratch"])
   , ( (myModMask,               xK_s),         nextScreen)
   , ( (myAltMask,               xK_c),         S.triggerScratch firefox)
   , ( (myControlMask,           xK_c),         S.triggerScratch chromium)

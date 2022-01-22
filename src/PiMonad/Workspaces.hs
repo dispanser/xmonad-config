@@ -34,7 +34,7 @@ projectFile f = ( </> f) . projectDirectory <$> currentProject
 
 tmpProject :: FilePath -> Project
 tmpProject home = Project {
-  projectName      = "temporary",
+  projectName      = "scratch",
   projectDirectory = home </> "tmp",
   projectStartHook = Nothing }
 
