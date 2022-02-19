@@ -341,7 +341,7 @@ myMainKeys =
   -- but doesn't have to be registered at startup.
   , ( (myModMask,               xK_o),         S.triggerScratch $ S.localTmux "overlay" rightBarRect)
   , ( (myModMask,               xK_semicolon), S.triggerScratch S.projectBrowser')
-  , ( (myAltMask,               xK_semicolon), S.triggerScratch S.projectChromium)
+  , ( (myShiftMask,             xK_semicolon), S.triggerScratch S.projectChromium)
   , ( (myShiftMask,             xK_c),         S.triggerScratch S.projectChromium)
   , ( (myModMask,               xK_F5),        spawn "/home/pi/bin/btk.sh")
   , ( (myModMask,               xK_F7),        spawn "xmodmap /home/pi/.Xmodmap")

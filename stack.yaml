@@ -1,10 +1,10 @@
-resolver: lts-14.0
+resolver: lts-18.25
 packages:
 - '.'
 
-extra-deps:
-- X11-xft-0.3.1
-- X11-1.8
+# extra-deps:
+# - X11-xft-0.3.1
+# - X11-1.8
 
 flags: {}
 
@@ -12,6 +12,6 @@ extra-package-dbs: []
 
 # allow-newer: true
 nix:
-    enable: false
+    enable: true
     # pure: false
     packages: [ xorg.libX11, xorg.libXrandr, xorg.libXext, pkgconfig, xorg.libXft ]
