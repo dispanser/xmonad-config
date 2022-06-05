@@ -107,7 +107,7 @@ confT       = S.globalTmux  "config" leftBarRect
 obsidian    = S.globalScratch "obsidian" (className =? "obsidian") centeredRect
 anki        = S.globalScratch "anki" (className =? "Anki") centeredRect
 chromium    = S.globalScratch "chromium" (className `S.contains` "hromium") leftBarRect
-firefox     = S.globalScratch "firefox " (className =? "Firefox") leftBarRect
+firefox     = S.globalScratch "firefox " (className =? "Navigator") leftBarRect
 pavucontrol = S.globalScratch "pavucontrol" (className =? "Pavucontrol") smallCentered
 
 -- this place is neecssary to have their hooks registered
@@ -131,7 +131,7 @@ myManageHook = composeAll (catMaybes $ S.hook <$> scratches)
   , className =?           "Franz"                --> addTagHook "m" >> doRectFloat centeredRect
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
   , className =?           "Vimb"                 --> addTagHook "b"
-  , className =?           "Firefox"              --> addTagHook "b"
+  , className =?           "firefox"              --> addTagHook "b"
   , appName   `S.contains` "hromium"              --> addTagHook "b"
   , className =?           "qutebrowser"          --> addTagHook "b"             >>     doRectFloat leftBarRect
   , className =?           "Emacs"                --> addTagHook "e"
@@ -200,7 +200,7 @@ tags = [ 'b' -- browsers
 keyToCode :: M.Map Char KeySym
 keyToCode = M.fromList $ zip (['a' .. 'z'] ++ ['0' .. '9']) ([xK_a .. xK_z] ++ [xK_0 .. xK_9])
 
-resizeStepSize :: Dimension
+resizeStepSize :: Int
 resizeStepSize = 120
 
 myModMask, myShiftMask, myControlMask, myAltMask, tagToggleMask, workspaceMask :: ButtonMask
