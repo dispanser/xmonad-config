@@ -120,30 +120,32 @@ myManageHook :: ManageHook
 myManageHook = composeAll (catMaybes $ S.hook <$> scratches)
   <+> composeAll
   [ title     =?           "xmessage"             --> doRectFloat centeredRect
-  , appName   `S.endsWith`   "_overlay"             --> doRectFloat rightBarRect
-  , appName   `S.endsWith`   "_scratch"             --> doRectFloat centeredRect
-  , appName   `S.endsWith`   "_org"                 --> doRectFloat centeredRect
+  , appName   `S.endsWith`   "_overlay"           --> doRectFloat rightBarRect
+  , appName   `S.endsWith`   "_scratch"           --> doRectFloat centeredRect
+  , appName   `S.endsWith`   "_org"               --> doRectFloat centeredRect
   -- title: WM_NAME / _NET_WM_NAME
   , title      =?          "Slack Call Minipanel" --> doRectFloat (W.RationalRect (17/20) (9/10) (fullWidth / 5) (2*fullHeight / 18))
-  , title `S.startsWith` "Slack"                    --> addTagHook "m"
-  , title `S.startsWith` "Signal"                   --> addTagHook "m"
+  , title `S.startsWith` "Slack"                  --> addTagHook "m"
+  , title `S.startsWith` "Signal"                 --> addTagHook "m"
+  , className =?           "Slack"                --> addTagHook "m"
   , className =?           "TelegramDesktop"      --> addTagHook "m"
   , className =?           "Franz"                --> addTagHook "m" >> doRectFloat centeredRect
   , className  =?          "Pinentry"             --> doRectFloat smallCentered
   , className =?           "Vimb"                 --> addTagHook "b"
-  , className =?           "firefox"              --> addTagHook "b"
+  , className `S.startsWith` "firefox"            --> addTagHook "b"
   , appName   `S.contains` "hromium"              --> addTagHook "b"
   , className =?           "qutebrowser"          --> addTagHook "b"             >>     doRectFloat leftBarRect
   , className =?           "Emacs"                --> addTagHook "e"
   , className =?           "Gvim"                 --> addTagHook "v"
+  , appName   =?           "browser-edit"         --> addTagHook "v"
   , className =?           "Apvlv"                --> addTagHook "v"
   , className =?           "Zathura"              --> addTagHook "v"
   , className =?           "jetbrains-idea-ce"    --> addTagHook "i"
   , className =?           "R_x11"                --> addTagHook "i"
   , className =?           "URxvt"                --> addTagHook "u"
   , className =?           "kitty"                --> addTagHook "u"
+  , className =?           "Alacritty"            --> addTagHook "u"
   , className =?           "Spotify"              --> doRectFloat rightBarRect
-  , role      =?           "browser-edit"         --> doRectFloat lowerRightRect
   , appName   =?           "browser-edit"         --> doRectFloat lowerRightRect
   ]
 
@@ -336,12 +338,13 @@ myMainKeys =
   , ( (myControlMask,           xK_l),         outerAction Expand)
   , ( (myControlMask,           xK_j),         outerAction MirrorShrink)
   , ( (myControlMask,           xK_k),         outerAction MirrorExpand)
-
+  , ( (myModMask,               xK_slash),     sendMessage $ Toggle MIRROR)
   -- overlay terminal: one per workspace. Very similar to named scratchpads,
   -- but doesn't have to be registered at startup.
   , ( (myModMask,               xK_o),         S.triggerScratch $ S.localTmux "overlay" rightBarRect)
   , ( (myModMask,               xK_semicolon), S.triggerScratch S.projectBrowser')
   , ( (myShiftMask,             xK_semicolon), S.triggerScratch S.projectChromium)
+  , ( (myAltMask,               xK_semicolon), S.triggerScratch S.projectFirefox)
   , ( (myShiftMask,             xK_c),         S.triggerScratch S.projectChromium)
   , ( (myModMask,               xK_F5),        spawn "/home/pi/bin/btk.sh")
   , ( (myModMask,               xK_F7),        spawn "xmodmap /home/pi/.Xmodmap")

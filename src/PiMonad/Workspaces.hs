@@ -3,6 +3,7 @@ module PiMonad.Workspaces ( projects
                           , toggleSideWorkspace
                           , getSideWorkspace
                           , getMainWorkspace
+                          , getWorkspaceName
                           , getOtherWorkspace
                           , shiftToOtherWorkspace )
 where
@@ -59,6 +60,9 @@ getOtherWorkspace :: WorkspaceId -> WorkspaceId
 getOtherWorkspace ws
   | "_side" `isSuffixOf` ws = take (length ws - 5) ws
   | otherwise             = ws ++ "_side"
+
+getWorkspaceName :: Project -> String
+getWorkspaceName = getMainWorkspace . projectName
 
 toggleSideWorkspace :: X ()
 toggleSideWorkspace = do

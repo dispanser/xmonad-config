@@ -14,12 +14,13 @@ module PiMonad.Scratches ( fromScratchOrFocus
                          , contains
                          , projectBrowser'
                          , projectChromium
+                         , projectFirefox
                          , ScratchApp (..)
                          )
 where
 
 import           Data.List                      (isPrefixOf, isSuffixOf, isInfixOf)
-import           PiMonad.Workspaces             (getMainWorkspace)
+import           PiMonad.Workspaces             (getMainWorkspace, getWorkspaceName)
 import           System.FilePath.Posix          ((</>))
 import           XMonad
 import           XMonad.Actions.DynamicProjects (Project (..), currentProject)
@@ -124,17 +125,16 @@ fromScratchOrFocus q i c = ifWindow q (showOrBring i) (spawn c)
 
 projectBrowser' :: ScratchApp
 projectBrowser' =
-   let localName pr = getMainWorkspace (projectName pr)
-       command pr = "qutebrowser --qt-arg name " ++ localName pr ++ " --target window --basedir " ++ (projectDirectory pr </> ".qute")
+   let command pr = "qutebrowser --qt-arg name " ++ getWorkspaceName  pr ++ " --target window --basedir " ++ (projectDirectory pr </> ".qute")
    in ScratchApp {
      commandF = command,
-     queryF   = \pr -> appName =? localName pr,
+     queryF   = \pr -> appName =? getWorkspaceName pr,
      hook     = Nothing
    }
 
 projectChromium :: ScratchApp
 projectChromium =
-   let localName pr = getMainWorkspace (projectName pr) ++ "_chr"
+   let localName pr = getWorkspaceName pr ++ "_chr"
        command pr = "chromium --class=" ++ localName pr ++
         " --user-data-dir=" ++ (projectDirectory pr </> ".chromium")
    in ScratchApp {
@@ -142,3 +142,17 @@ projectChromium =
      queryF   = \pr -> className =? localName pr,
      hook     = Nothing
    }
+
+-- firefox -P Test --class firefox_test
+projectFirefox :: ScratchApp
+projectFirefox =
+   let localName pr = "firefox_" <> getWorkspaceName pr
+       command pr = "firefox -P " <> (getWorkspaceName pr) <> " --class " <>
+           (localName pr) <> " --profile " <> (projectDirectory pr </> ".firefox")
+   in ScratchApp {
+     commandF = command,
+     queryF   = \pr -> className =? localName pr,
+     hook     = Nothing
+   }
+
+
