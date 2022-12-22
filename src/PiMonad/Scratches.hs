@@ -39,7 +39,7 @@ term shellCommand cn  =
   "kitty --name " ++ cn ++ " -e " ++ shellCommand
 
 tmux :: String -> String
-tmux session = "zsh -i -c \"tas " ++ session ++ "\""
+tmux session = " sh -c \"tmux attach -t " ++ session ++ " || tmux new-session -s " ++ session ++ "\""
 
 tmuxTerm :: String -> String -> String
 tmuxTerm shellCommand = term (tmux shellCommand)
